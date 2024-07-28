@@ -1,12 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to GitHub Pages</title>
+    <meta charset="utf-8">
+    <title>Column A Data Viewer</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 </head>
 <body>
-    <h1>Hello, World!</h1>
-    <p>This is a simple GitHub Pages site.</p>
+    <h1>Data from Column A</h1>
+    <pre id="data-display">Waiting for data...</pre>
+    <script>
+        grist.ready({
+            columns: ['A'], 
+            requiredAccess: 'read table' 
+        });
+
+        grist.onRecord(function(record, mappings) {
+            const mapped = grist.mapColumnNames(record);
+            if (mapped) {
+                document.getElementById('data-display').innerHTML = JSON.stringify(mapped.A, null, 2);
+            } else {
+                console.error("Please map all columns correctly");
+            }
+        });
+    </script>
 </body>
 </html>
