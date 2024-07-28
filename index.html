@@ -9,15 +9,21 @@
     <h1>Data from Column A</h1>
     <pre id="data-display">Waiting for data...</pre>
     <script>
+        // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['A'], 
-            requiredAccess: 'read table' 
+            columns: ['A'],  // Запрашиваем колонку А
+            requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
-        grist.onRecord(function(record, mappings) {
-            const mapped = grist.mapColumnNames(record);
-            if (mapped) {
-                document.getElementById('data-display').innerHTML = JSON.stringify(mapped.A, null, 2);
+        // Подписываемся на изменения данных в таблице
+        grist.onRecords(function(records, mappings) {
+            // Маппинг колонок для получения данных из колонки А
+            const mappedRecords = grist.mapColumnNames(records);
+            if (mappedRecords) {
+                // Извлекаем все значения из колонки А
+                const columnAData = mappedRecords.map(record => record.A);
+                // Отображаем данные из колонки А через запятую
+                document.getElementById('data-display').innerHTML = columnAData.join(', ');
             } else {
                 console.error("Please map all columns correctly");
             }
