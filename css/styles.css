@@ -103,7 +103,8 @@ button {
     cursor: pointer;
 }
 
-button.expense-button, button.summary-button {
+button.summary-button,
+button.expense-button {
     background-color: #ccc;
     color: #333;
     margin: 5px;
@@ -113,12 +114,14 @@ button.expense-button, button.summary-button {
     height: 50px;
 }
 
-button.expense-button.active, button.summary-button.active {
+button.summary-button.active,
+button.expense-button.active {
     background-color: #4CAF50;
     color: #fff;
 }
 
-.expense-buttons-container, .summary-buttons-container {
+.summary-buttons-container,
+.expense-buttons-container {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
