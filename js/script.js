@@ -24,6 +24,7 @@ grist.onRecords(function(records, mappings) {
         teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
         updateDropdown('team', uniqueTeams, 'Все');
         updateEmployeeDropdown();
+        updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Данные загружены. Выставите даты';
     } else {
         console.error("Please map all columns correctly");
@@ -127,9 +128,9 @@ function filterData() {
         document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
 
         const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
-            return `<div>${category}: ${formatCurrency(sum.toFixed(2))} $</div>`;
+            return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
         }).join('');
-        document.getElementById('expense-categories-display').innerHTML = expenseCategoriesHTML;
+        document.getElementById('expense-buttons').innerHTML = expenseCategoriesHTML;
     } else {
         document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
         document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
@@ -137,10 +138,64 @@ function filterData() {
         document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
         document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
         document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
-        document.getElementById('expense-categories-display').innerHTML = '';
+        document.getElementById('expense-buttons').innerHTML = '';
     }
 }
 
 function formatCurrency(value) {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function toggleExpense(button) {
+    button.classList.toggle('active');
+    updateDataDisplay();
+}
+
+function toggleAllButtons() {
+    const buttons = document.querySelectorAll('.expense-button');
+    const allActive = [...buttons].every(button => button.classList.contains('active'));
+    buttons.forEach(button => {
+        if (allActive) {
+            button.classList.remove('active');
+        } else {
+            button.classList.add('active');
+        }
+    });
+    updateDataDisplay();
+}
+
+function updateDataDisplay() {
+    const activeButtons = document.querySelectorAll('.expense-button.active');
+    const activeCategories = [...activeButtons].map(button => button.getAttribute('data-category'));
+    const filteredRecords = allRecords.filter(record => activeCategories.includes(record['Операция']));
+
+    if (filteredRecords.length > 0) {
+        const tableHTML = `
+            <table>
+                <tr>
+                    <th>Дата</th>
+                    <th>Сотрудник</th>
+                    <th>Операция</th>
+                    <th>Сумма</th>
+                    <th>Объем</th>
+                    <th>Профит</th>
+                    <th>Спред</th>
+                </tr>
+                ${filteredRecords.map(record => `
+                    <tr>
+                        <td>${record['Дата']}</td>
+                        <td>${record['Сотрудник']}</td>
+                        <td>${record['Операция']}</td>
+                        <td>${record['Сумма']}</td>
+                        <td>${record['Объем']}</td>
+                        <td>${record['Профит']}</td>
+                        <td>${record['Спред']}</td>
+                    </tr>
+                `).join('')}
+            </table>
+        `;
+        document.getElementById('data-display').innerHTML = tableHTML;
+    } else {
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+    }
 }
