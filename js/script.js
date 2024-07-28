@@ -157,10 +157,6 @@ function formatDate(dateString) {
     return date.toFormat('dd.MM.yyyy HH:mm');
 }
 
-function formatPercentage(value) {
-    return `${(parseFloat(value) * 100).toFixed(2).replace('.', ',')} %`;
-}
-
 function toggleExpense(button) {
     button.classList.toggle('active');
     updateDataDisplay();
@@ -205,10 +201,10 @@ function updateDataDisplay() {
                             <td>${formatDate(record['Дата'])}</td>
                             <td>${record['Сотрудник']}</td>
                             <td>${record['Операция']}</td>
-                            <td>${formatCurrency(record['Сумма'])} $</td>
-                            <td>${formatCurrency(record['Объем'])} $</td>
-                            <td>${formatCurrency(record['Профит'])} $</td>
-                            <td>${formatPercentage(record['Спред'])}</td>
+                            <td>${record['Сумма']}</td>
+                            <td>${record['Объем']}</td>
+                            <td>${record['Профит']}</td>
+                            <td>${record['Спред']}</td>
                         </tr>
                     `).join('')}
                 </tbody>
