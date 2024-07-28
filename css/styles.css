@@ -130,10 +130,17 @@ th {
     background-color: #f4f4f9;
     cursor: pointer;
     position: relative;
+    padding-right: 20px;
 }
 
-th:after {
-    content: ' \25B2\25BC';
+th .sort-arrow {
     position: absolute;
     right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+}
+
+th .sort-arrow.asc {
+    transform: translateY(-50%) rotate(180deg);
 }
