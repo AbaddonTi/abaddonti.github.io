@@ -2,33 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Date Range Filter</title>
+    <title>Фильтр по дате, команде и сотруднику</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
-    <h1>Filter Data by Date Range, Team, and Employee</h1>
-    <label for="start-date">Start Date and Time (MSK):</label>
+    <h1>Фильтр данных по дате, команде и сотруднику</h1>
+    <label for="start-date">Дата и время начала (MSK):</label>
     <input type="datetime-local" id="start-date">
     <br>
-    <label for="end-date">End Date and Time (MSK):</label>
+    <label for="end-date">Дата и время окончания (MSK):</label>
     <input type="datetime-local" id="end-date">
     <br>
-    <label for="team">Select Team:</label>
+    <label for="team">Выберите команду:</label>
     <select id="team" onchange="updateEmployeeDropdown()">
         <option value="Все">Все</option>
     </select>
     <br>
-    <label for="employee">Select Employee:</label>
+    <label for="employee">Выберите сотрудника:</label>
     <select id="employee">
         <option value="Любой">Любой</option>
     </select>
     <br>
-    <button onclick="filterData()">Filter Data</button>
-    <pre id="data-display">Waiting for data...</pre>
-    <div id="profit-display">Total Profit: </div>
-    <div id="spread-display">Average Spread: </div>
-    <div id="volume-display">Total Volume: </div>
+    <button onclick="filterData()">Фильтровать данные</button>
+    <pre id="data-display">Ожидание данных...</pre>
+    <div id="profit-display">Общий Профит: </div>
+    <div id="spread-display">Средний Спред: </div>
+    <div id="volume-display">Общий Объем: </div>
 
     <script>
         let allRecords = [];
@@ -38,7 +38,7 @@
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем'],  // Запрашиваем колонки с датами, профитом, командой, сотрудником, спредом и объемом
+            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем'],  // Запрашиваем необходимые колонки
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
@@ -51,9 +51,9 @@
                 teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
                 updateDropdown('team', uniqueTeams, 'Все');
                 updateEmployeeDropdown();
-                document.getElementById('data-display').innerHTML = 'Data loaded. Use the filters to filter.';
+                document.getElementById('data-display').innerHTML = 'Данные загружены. Используйте фильтры для фильтрации.';
             } else {
-                console.error("Please map all columns correctly");
+                console.error("Пожалуйста, правильно сопоставьте все колонки.");
             }
         });
 
@@ -99,7 +99,7 @@
             const selectedEmployee = document.getElementById('employee').value;
 
             if (!startDate.isValid || !endDate.isValid) {
-                document.getElementById('data-display').innerHTML = 'Please enter valid start and end dates.';
+                document.getElementById('data-display').innerHTML = 'Пожалуйста, введите действительные начальную и конечную даты.';
                 return;
             }
 
@@ -113,20 +113,19 @@
 
             if (filteredRecords.length > 0) {
                 const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
-                const spreads = filteredRecords.map(record => parseFloat(record['Спред'].replace(',', '.').replace('%', '')) || 0);
-                const averageSpread = (spreads.reduce((sum, spread) => sum + spread, 0) / spreads.length).toFixed(2);
-                const volumes = filteredRecords.map(record => parseFloat(record['Объем'].replace(/\s+/g, '').replace('$', '')) || 0);
-                const totalVolume = volumes.reduce((sum, volume) => sum + volume, 0).toLocaleString('en-US');
+                const spreadSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Спред'].replace(',', '.') || 0), 0);
+                const spreadAvg = (spreadSum / filteredRecords.length).toFixed(2);
+                const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'].replace(/\s+/g, '').replace('$', '') || 0), 0).toFixed(2);
 
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
-                document.getElementById('profit-display').innerHTML = `Total Profit: ${profitSum} $`;
-                document.getElementById('spread-display').innerHTML = `Average Spread: ${averageSpread} %`;
-                document.getElementById('volume-display').innerHTML = `Total Volume: ${totalVolume} $`;
+                document.getElementById('profit-display').innerHTML = `Общий Профит: ${profitSum} $`;
+                document.getElementById('spread-display').innerHTML = `Средний Спред: ${spreadAvg} %`;
+                document.getElementById('volume-display').innerHTML = `Общий Объем: ${volumeSum} $`;
             } else {
-                document.getElementById('data-display').innerHTML = 'No records found in the specified date range, team, and employee.';
-                document.getElementById('profit-display').innerHTML = 'Total Profit: 0.00 $';
-                document.getElementById('spread-display').innerHTML = 'Average Spread: 0.00 %';
-                document.getElementById('volume-display').innerHTML = 'Total Volume: 0 $';
+                document.getElementById('data-display').innerHTML = 'Нет записей, соответствующих указанным критериям.';
+                document.getElementById('profit-display').innerHTML = 'Общий Профит: 0.00 $';
+                document.getElementById('spread-display').innerHTML = 'Средний Спред: 0.00 %';
+                document.getElementById('volume-display').innerHTML = 'Общий Объем: 0.00 $';
             }
         }
     </script>
