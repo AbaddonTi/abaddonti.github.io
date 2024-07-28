@@ -4,7 +4,7 @@ let uniqueTeams = new Set();
 let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
 let sortColumn = 'Дата';
-let sortDirection = 'desc'; // По умолчанию сортировка по убыванию
+let sortDirection = 'desc'; 
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -29,7 +29,7 @@ grist.onRecords(function(records, mappings) {
         updateEmployeeDropdown();
         updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-        filterData(); // Обновление данных при загрузке
+        filterData(); 
     } else {
         console.error("Please map all columns correctly");
     }
@@ -134,7 +134,7 @@ function filterData() {
         const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
             return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
         }).join('');
-        document.getElementById('expense-buttons').innerHTML = expenseCategoriesHTML;
+        document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
@@ -150,6 +150,11 @@ function filterData() {
 
 function formatCurrency(value) {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function formatDate(dateString) {
+    const date = luxon.DateTime.fromISO(dateString, { zone: 'Europe/Moscow' });
+    return date.toFormat('dd.MM.yyyy HH:mm');
 }
 
 function toggleExpense(button) {
@@ -193,7 +198,7 @@ function updateDataDisplay() {
                 <tbody>
                     ${sortedRecords.map(record => `
                         <tr>
-                            <td>${record['Дата']}</td>
+                            <td>${formatDate(record['Дата'])}</td>
                             <td>${record['Сотрудник']}</td>
                             <td>${record['Операция']}</td>
                             <td>${record['Сумма']}</td>
