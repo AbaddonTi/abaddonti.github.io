@@ -2,33 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Фильтр по дате, команде и сотруднику</title>
+    <title>Фильтр данных по дате, команде и сотруднику</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
-    <h1>Фильтр данных по дате, команде и сотруднику v2</h1>
-    <label for="start-date">Дата и время начала (MSK):</label>
+    <h1>Фильтр данных по дате, команде и сотруднику</h1>
+    <label for="start-date">Начальная дата и время (МСК):</label>
     <input type="datetime-local" id="start-date">
     <br>
-    <label for="end-date">Дата и время окончания (MSK):</label>
+    <label for="end-date">Конечная дата и время (МСК):</label>
     <input type="datetime-local" id="end-date">
     <br>
-    <label for="team">Выберите команду:</label>
+    <label for="team">Выбор команды:</label>
     <select id="team" onchange="updateEmployeeDropdown()">
         <option value="Все">Все</option>
     </select>
     <br>
-    <label for="employee">Выберите сотрудника:</label>
+    <label for="employee">Выбор сотрудника:</label>
     <select id="employee">
         <option value="Любой">Любой</option>
     </select>
     <br>
-    <button onclick="filterData()">Фильтровать данные</button>
+    <button onclick="filterData()">Применить фильтр</button>
     <pre id="data-display">Ожидание данных...</pre>
-    <div id="profit-display">Общий Профит: </div>
-    <div id="spread-display">Средний Спред: </div>
-    <div id="volume-display">Общий Объем: </div>
+    <div id="profit-display">Общий профит: </div>
+    <div id="spread-display">Средний спред: </div>
 
     <script>
         let allRecords = [];
@@ -38,7 +37,7 @@
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем'],  // Запрашиваем необходимые колонки
+            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред'],  // Запрашиваем колонки с датами, профитом, командой, сотрудником и спредом
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
@@ -53,7 +52,7 @@
                 updateEmployeeDropdown();
                 document.getElementById('data-display').innerHTML = 'Данные загружены. Используйте фильтры для фильтрации.';
             } else {
-                console.error("Пожалуйста, правильно сопоставьте все колонки.");
+                console.error("Please map all columns correctly");
             }
         });
 
@@ -99,7 +98,7 @@
             const selectedEmployee = document.getElementById('employee').value;
 
             if (!startDate.isValid || !endDate.isValid) {
-                document.getElementById('data-display').innerHTML = 'Пожалуйста, введите действительные начальную и конечную даты.';
+                document.getElementById('data-display').innerHTML = 'Пожалуйста, введите корректные начальную и конечную даты.';
                 return;
             }
 
@@ -113,19 +112,16 @@
 
             if (filteredRecords.length > 0) {
                 const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
-                const spreadSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Спред'].replace(',', '.') || 0), 0);
+                const spreadSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
                 const spreadAvg = (spreadSum / filteredRecords.length).toFixed(2);
-                const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'].replace(/\s+/g, '').replace('$', '') || 0), 0).toFixed(2);
 
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
-                document.getElementById('profit-display').innerHTML = `Общий Профит: ${profitSum} $`;
-                document.getElementById('spread-display').innerHTML = `Средний Спред: ${spreadAvg} %`;
-                document.getElementById('volume-display').innerHTML = `Общий Объем: ${volumeSum} $`;
+                document.getElementById('profit-display').innerHTML = `Общий профит: ${profitSum} $`;
+                document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg}`;
             } else {
-                document.getElementById('data-display').innerHTML = 'Нет записей, соответствующих указанным критериям.';
-                document.getElementById('profit-display').innerHTML = 'Общий Профит: 0.00 $';
-                document.getElementById('spread-display').innerHTML = 'Средний Спред: 0.00 %';
-                document.getElementById('volume-display').innerHTML = 'Общий Объем: 0.00 $';
+                document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
+                document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
+                document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00';
             }
         }
     </script>
