@@ -7,11 +7,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
-    <h1>Фильтр данных по дате, команде и сотруднику</h1>
-    <label for="start-date">Начальная дата и время:</label>
+    <h1>Фильтр данных по дате, команде и сотруднику3</h1>
+    <label for="start-date">Начальная дата и время (МСК):</label>
     <input type="datetime-local" id="start-date">
     <br>
-    <label for="end-date">Конечная дата и время:</label>
+    <label for="end-date">Конечная дата и время (МСК):</label>
     <input type="datetime-local" id="end-date">
     <br>
     <label for="team">Выбор команды:</label>
@@ -28,6 +28,7 @@
     <pre id="data-display">Ожидание данных...</pre>
     <div id="profit-display">Общий профит: </div>
     <div id="spread-display">Средний спред: </div>
+    <div id="volume-display">Общий объем: </div>
 
     <script>
         let allRecords = [];
@@ -37,7 +38,7 @@
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред'],  // Запрашиваем колонки с датами, профитом, командой, сотрудником и спредом
+            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем'],  // Запрашиваем колонки с датами, профитом, командой, сотрудником, спредом и объемом
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
@@ -115,15 +116,19 @@
 
                 const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
                 const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
-                const spreadAvg = (spreadSum / validSpreadRecords.length).toFixed(2);
+                const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
+
+                const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'] || 0), 0).toFixed(2);
 
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
                 document.getElementById('profit-display').innerHTML = `Общий профит: ${profitSum} $`;
                 document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
+                document.getElementById('volume-display').innerHTML = `Общий объем: ${volumeSum}`;
             } else {
                 document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
                 document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
                 document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
+                document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00';
             }
         }
     </script>
