@@ -7,12 +7,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
-    <h1>Filter Data by Date Range</h1>
+    <h1>Filter Data by Date Range and Team</h1>
     <label for="start-date">Start Date and Time (MSK):</label>
     <input type="datetime-local" id="start-date">
     <br>
     <label for="end-date">End Date and Time (MSK):</label>
     <input type="datetime-local" id="end-date">
+    <br>
+    <label for="team">Select Team:</label>
+    <select id="team">
+        <option value="Все">Все</option>
+    </select>
     <br>
     <button onclick="filterData()">Filter Data</button>
     <pre id="data-display">Waiting for data...</pre>
@@ -20,10 +25,11 @@
 
     <script>
         let allRecords = [];
+        let uniqueTeams = new Set();
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата', 'Профит'],  // Запрашиваем колонки с датами и профитом
+            columns: ['Дата', 'Профит', 'Команда'],  // Запрашиваем колонки с датами, профитом и командой
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
@@ -32,15 +38,29 @@
             const mappedRecords = grist.mapColumnNames(records);
             if (mappedRecords) {
                 allRecords = mappedRecords;  // Сохраняем все записи
-                document.getElementById('data-display').innerHTML = 'Data loaded. Use the date pickers to filter.';
+                uniqueTeams = new Set(mappedRecords.map(record => record['Команда']));
+                updateTeamDropdown(uniqueTeams);
+                document.getElementById('data-display').innerHTML = 'Data loaded. Use the filters to filter.';
             } else {
                 console.error("Please map all columns correctly");
             }
         });
 
+        function updateTeamDropdown(teams) {
+            const teamSelect = document.getElementById('team');
+            teamSelect.innerHTML = '<option value="Все">Все</option>';
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.text = team;
+                teamSelect.add(option);
+            });
+        }
+
         function filterData() {
             const startDate = luxon.DateTime.fromISO(document.getElementById('start-date').value, { zone: 'Europe/Moscow' });
             const endDate = luxon.DateTime.fromISO(document.getElementById('end-date').value, { zone: 'Europe/Moscow' });
+            const selectedTeam = document.getElementById('team').value;
 
             if (!startDate.isValid || !endDate.isValid) {
                 document.getElementById('data-display').innerHTML = 'Please enter valid start and end dates.';
@@ -49,7 +69,9 @@
 
             const filteredRecords = allRecords.filter(record => {
                 const recordDate = luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' });
-                return recordDate >= startDate && recordDate <= endDate;
+                const isInDateRange = recordDate >= startDate && recordDate <= endDate;
+                const isInTeam = selectedTeam === 'Все' || record['Команда'] === selectedTeam;
+                return isInDateRange && isInTeam;
             });
 
             if (filteredRecords.length > 0) {
@@ -57,7 +79,7 @@
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
                 document.getElementById('profit-display').innerHTML = `Total Profit: ${profitSum}`;
             } else {
-                document.getElementById('data-display').innerHTML = 'No records found in the specified date range.';
+                document.getElementById('data-display').innerHTML = 'No records found in the specified date range and team.';
                 document.getElementById('profit-display').innerHTML = 'Total Profit: 0';
             }
         }
