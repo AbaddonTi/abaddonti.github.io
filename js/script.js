@@ -4,7 +4,7 @@ let uniqueTeams = new Set();
 let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
 let sortColumn = 'Дата';
-let sortDirection = 'desc'; // По умолчанию сортировка по убыванию
+let sortDirection = 'desc'; 
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -29,7 +29,7 @@ grist.onRecords(function(records, mappings) {
         updateEmployeeDropdown();
         updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-        filterData(); // Обновление данных при загрузке
+        filterData(); 
     } else {
         console.error("Please map all columns correctly");
     }
@@ -157,8 +157,8 @@ function formatDate(dateString) {
     return date.toFormat('dd.MM.yyyy HH:mm');
 }
 
-function formatSpread(value) {
-    return value !== null ? `${(value * 100).toFixed(2).replace('.', ',')} %` : '0,00 %';
+function formatPercentage(value) {
+    return `${(parseFloat(value) * 100).toFixed(2).replace('.', ',')} %`;
 }
 
 function toggleExpense(button) {
@@ -208,7 +208,7 @@ function updateDataDisplay() {
                             <td>${formatCurrency(record['Сумма'])} $</td>
                             <td>${formatCurrency(record['Объем'])} $</td>
                             <td>${formatCurrency(record['Профит'])} $</td>
-                            <td>${formatSpread(record['Спред'])}</td>
+                            <td>${formatPercentage(record['Спред'])}</td>
                         </tr>
                     `).join('')}
                 </tbody>
