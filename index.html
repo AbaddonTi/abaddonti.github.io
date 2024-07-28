@@ -7,24 +7,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
-    <h1>Фильтр данных по дате, команде и сотруднику3</h1>
+    <h1>Фильтр данных по дате, команде и сотруднику</h1>
     <label for="start-date">Начальная дата и время (МСК):</label>
-    <input type="datetime-local" id="start-date">
+    <input type="datetime-local" id="start-date" onchange="filterData()">
     <br>
     <label for="end-date">Конечная дата и время (МСК):</label>
-    <input type="datetime-local" id="end-date">
+    <input type="datetime-local" id="end-date" onchange="filterData()">
     <br>
     <label for="team">Выбор команды:</label>
-    <select id="team" onchange="updateEmployeeDropdown()">
+    <select id="team" onchange="updateEmployeeDropdown(); filterData();">
         <option value="Все">Все</option>
     </select>
     <br>
     <label for="employee">Выбор сотрудника:</label>
-    <select id="employee">
+    <select id="employee" onchange="filterData()">
         <option value="Любой">Любой</option>
     </select>
     <br>
-    <button onclick="filterData()">Применить фильтр</button>
     <pre id="data-display">Ожидание данных...</pre>
     <div id="profit-display">Общий профит: </div>
     <div id="spread-display">Средний спред: </div>
@@ -36,17 +35,15 @@
         let uniqueEmployees = new Set();
         let teamEmployeeMap = {};
 
-        // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем'],  // Запрашиваем колонки с датами, профитом, командой, сотрудником, спредом и объемом
-            requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
+            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем'],
+            requiredAccess: 'read table'  
         });
 
-        // Подписываемся на изменения данных в таблице
         grist.onRecords(function(records, mappings) {
             const mappedRecords = grist.mapColumnNames(records);
             if (mappedRecords) {
-                allRecords = mappedRecords;  // Сохраняем все записи
+                allRecords = mappedRecords;  
                 uniqueTeams = new Set(mappedRecords.map(record => record['Команда']));
                 teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
                 updateDropdown('team', uniqueTeams, 'Все');
@@ -113,23 +110,29 @@
 
             if (filteredRecords.length > 0) {
                 const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
+                const formattedProfitSum = formatCurrency(profitSum);
 
                 const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
                 const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
                 const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
 
                 const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'] || 0), 0).toFixed(2);
+                const formattedVolumeSum = formatCurrency(volumeSum);
 
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
-                document.getElementById('profit-display').innerHTML = `Общий профит: ${profitSum} $`;
+                document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
                 document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
-                document.getElementById('volume-display').innerHTML = `Общий объем: ${volumeSum}`;
+                document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
             } else {
                 document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
                 document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
                 document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
-                document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00';
+                document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
             }
+        }
+
+        function formatCurrency(value) {
+            return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         }
     </script>
 </body>
