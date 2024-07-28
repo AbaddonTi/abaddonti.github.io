@@ -5,17 +5,9 @@
     <title>Фильтр данных по дате, команде и сотруднику</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
-    <style>
-        .cell-income {
-            background-color: #E1FEDE;
-        }
-        .cell-expense {
-            background-color: #FECBCC;
-        }
-    </style>
 </head>
 <body>
-    <h1>Фильтр данных по дате, команде и сотруднику22</h1>
+    <h1>Фильтр данных по дате, команде и сотруднику1</h1>
     <label for="start-date">Начальная дата и время (МСК):</label>
     <input type="datetime-local" id="start-date" onchange="filterData()">
     <br>
@@ -132,11 +124,10 @@
 
                 let netIncome = 0;
                 filteredRecords.forEach(record => {
-                    const operationCell = document.createElement('div');
-                    operationCell.innerHTML = record['Операция'];
-                    if (operationCell.querySelector('.cell-income')) {
+                    console.log(`Операция: ${record['Операция']}, Сумма: ${record['Сумма']}`);
+                    if (record['Операция'] === 'Перевод (получаем на счёт)' || record['Операция'] === 'Пересчёт кассы') {
                         netIncome += parseFloat(record['Сумма'] || 0);
-                    } else if (operationCell.querySelector('.cell-expense')) {
+                    } else if (record['Операция'] === 'Перевод (снимаем с счёта)' || record['Операция'] === 'Расходы на дропов') {
                         netIncome -= parseFloat(record['Сумма'] || 0);
                     }
                 });
