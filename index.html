@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Date Range Filter</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
     <h1>Filter Data by Date Range</h1>
@@ -37,20 +38,17 @@
         });
 
         function filterData() {
-            const startDate = new Date(document.getElementById('start-date').value);
-            const endDate = new Date(document.getElementById('end-date').value);
+            const startDate = luxon.DateTime.fromISO(document.getElementById('start-date').value, { zone: 'Europe/Moscow' });
+            const endDate = luxon.DateTime.fromISO(document.getElementById('end-date').value, { zone: 'Europe/Moscow' });
 
-            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            if (!startDate.isValid || !endDate.isValid) {
                 document.getElementById('data-display').innerHTML = 'Please enter valid start and end dates.';
                 return;
             }
 
-            const startDateUTC = new Date(startDate.getTime() - (startDate.getTimezoneOffset() * 6000));
-            const endDateUTC = new Date(endDate.getTime() - (endDate.getTimezoneOffset() * 6000));
-
             const filteredRecords = allRecords.filter(record => {
-                const recordDate = new Date(record['Дата']);
-                return recordDate >= startDateUTC && recordDate <= endDateUTC;
+                const recordDate = luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' });
+                return recordDate >= startDate && recordDate <= endDate;
             });
 
             if (filteredRecords.length > 0) {
