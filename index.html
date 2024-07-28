@@ -2,32 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Column A Data Viewer</title>
+    <title>Date Range Filter</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 </head>
 <body>
-    <h1>Data from Column A</h1>
+    <h1>Filter Data by Date Range</h1>
+    <label for="start-date">Start Date and Time:</label>
+    <input type="datetime-local" id="start-date">
+    <br>
+    <label for="end-date">End Date and Time:</label>
+    <input type="datetime-local" id="end-date">
+    <br>
+    <button onclick="filterData()">Filter Data</button>
     <pre id="data-display">Waiting for data...</pre>
+
     <script>
+        let allRecords = [];
+
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['A'],  // Запрашиваем колонку А
+            columns: ['Дата'],  // Запрашиваем колонку с датами
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
         // Подписываемся на изменения данных в таблице
         grist.onRecords(function(records, mappings) {
-            // Маппинг колонок для получения данных из колонки А
             const mappedRecords = grist.mapColumnNames(records);
             if (mappedRecords) {
-                // Извлекаем все значения из колонки А
-                const columnAData = mappedRecords.map(record => record.A);
-                // Отображаем данные из колонки А через запятую
-                document.getElementById('data-display').innerHTML = columnAData.join(', ');
+                allRecords = mappedRecords;  // Сохраняем все записи
+                document.getElementById('data-display').innerHTML = 'Data loaded. Use the date pickers to filter.';
             } else {
                 console.error("Please map all columns correctly");
             }
         });
+
+        function filterData() {
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                document.getElementById('data-display').innerHTML = 'Please enter valid start and end dates.';
+                return;
+            }
+
+            const filteredRecords = allRecords.filter(record => {
+                const recordDate = new Date(record['Дата']);
+                return recordDate >= startDate && recordDate <= endDate;
+            });
+
+            if (filteredRecords.length > 0) {
+                document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
+            } else {
+                document.getElementById('data-display').innerHTML = 'No records found in the specified date range.';
+            }
+        }
     </script>
 </body>
 </html>
