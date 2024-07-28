@@ -1,9 +1,10 @@
 let allRecords = [];
+let filteredRecords = [];
 let uniqueTeams = new Set();
 let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
 let sortColumn = 'Дата';
-let sortDirection = 'desc';
+let sortDirection = 'desc'; // По умолчанию сортировка по убыванию
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -28,7 +29,7 @@ grist.onRecords(function(records, mappings) {
         updateEmployeeDropdown();
         updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-        filterData(); 
+        filterData(); // Обновление данных при загрузке
     } else {
         console.error("Please map all columns correctly");
     }
@@ -80,7 +81,7 @@ function filterData() {
         return;
     }
 
-    const filteredRecords = allRecords.filter(record => {
+    filteredRecords = allRecords.filter(record => {
         const recordDate = luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' });
         const isInDateRange = recordDate >= startDate && recordDate <= endDate;
         const isInTeam = selectedTeam === 'Все' || record['Команда'] === selectedTeam;
@@ -172,10 +173,10 @@ function toggleAllButtons() {
 function updateDataDisplay() {
     const activeButtons = document.querySelectorAll('.expense-button.active');
     const activeCategories = [...activeButtons].map(button => button.getAttribute('data-category'));
-    const filteredRecords = allRecords.filter(record => activeCategories.includes(record['Операция']));
+    const activeFilteredRecords = filteredRecords.filter(record => activeCategories.includes(record['Операция']));
 
-    if (filteredRecords.length > 0) {
-        const sortedRecords = sortRecords(filteredRecords);
+    if (activeFilteredRecords.length > 0) {
+        const sortedRecords = sortRecords(activeFilteredRecords);
         const tableHTML = `
             <table>
                 <thead>
