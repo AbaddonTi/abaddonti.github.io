@@ -5,6 +5,46 @@
     <title>Фильтр данных по дате, команде и сотруднику</title>
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        select, input[type="datetime-local"] {
+            display: block;
+            margin-bottom: 10px;
+            padding: 5px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .result {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .result div {
+            margin-bottom: 10px;
+        }
+        .result div span {
+            font-weight: bold;
+        }
+        .result .category {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
 </head>
 <body>
     <h1>Фильтр данных по дате, команде и сотруднику</h1>
@@ -23,14 +63,14 @@
     <select id="employee" onchange="filterData()">
         <option value="Любой">Любой</option>
     </select>
-    <br>
-    <pre id="data-display">Ожидание данных...</pre>
-    <div id="profit-display">Общий профит: </div>
-    <div id="spread-display">Средний спред: </div>
-    <div id="volume-display">Общий объем: </div>
-    <div id="net-income-display">Чистая прибыль: </div>
-    <div id="total-expense-display">Общая сумма трат: </div>
-    <div id="expense-categories-display"></div>
+    <div class="result" id="results">
+        <div id="profit-display">Общий профит: </div>
+        <div id="spread-display">Средний спред: </div>
+        <div id="volume-display">Общий объем: </div>
+        <div id="net-income-display">Чистая прибыль: </div>
+        <div id="total-expense-display">Общая сумма трат: </div>
+        <div id="expense-categories-display" class="category"></div>
+    </div>
 
     <script>
         let allRecords = [];
@@ -60,7 +100,7 @@
                 teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
                 updateDropdown('team', uniqueTeams, 'Все');
                 updateEmployeeDropdown();
-                document.getElementById('data-display').innerHTML = 'Данные загружены. Используйте фильтры для фильтрации.';
+                document.getElementById('results').style.display = 'block';
             } else {
                 console.error("Please map all columns correctly");
             }
@@ -108,7 +148,7 @@
             const selectedEmployee = document.getElementById('employee').value;
 
             if (!startDate.isValid || !endDate.isValid) {
-                document.getElementById('data-display').innerHTML = 'Пожалуйста, введите корректные начальную и конечную даты.';
+                document.getElementById('results').style.display = 'none';
                 return;
             }
 
@@ -155,19 +195,17 @@
                 const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
                 const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
 
-                document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
-                document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
-                document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
-                document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
-                document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
-                document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
+                document.getElementById('profit-display').innerHTML = `<span>Общий профит:</span> ${formattedProfitSum} $`;
+                document.getElementById('spread-display').innerHTML = `<span>Средний спред:</span> ${spreadAvg.replace('.', ',')} %`;
+                document.getElementById('volume-display').innerHTML = `<span>Общий объем:</span> ${formattedVolumeSum} $`;
+                document.getElementById('net-income-display').innerHTML = `<span>Чистая прибыль:</span> ${formattedNetIncome} $`;
+                document.getElementById('total-expense-display').innerHTML = `<span>Общая сумма трат:</span> ${formattedTotalExpenses} $`;
 
                 const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
                     return `<div>${category}: ${formatCurrency(sum.toFixed(2))} $</div>`;
                 }).join('');
                 document.getElementById('expense-categories-display').innerHTML = expenseCategoriesHTML;
             } else {
-                document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
                 document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
                 document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
                 document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
