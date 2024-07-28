@@ -113,3 +113,27 @@ button.expense-button.active {
     background-color: #4CAF50;
     color: #fff;
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    text-align: center;
+    padding: 8px;
+}
+
+th {
+    background-color: #f4f4f9;
+    cursor: pointer;
+    position: relative;
+}
+
+th:after {
+    content: ' \25B2\25BC';
+    position: absolute;
+    right: 10px;
+}
