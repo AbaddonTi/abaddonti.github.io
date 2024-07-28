@@ -2,6 +2,8 @@ let allRecords = [];
 let uniqueTeams = new Set();
 let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
+let sortColumn = '';
+let sortDirection = 'asc';
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -170,32 +172,62 @@ function updateDataDisplay() {
     const filteredRecords = allRecords.filter(record => activeCategories.includes(record['Операция']));
 
     if (filteredRecords.length > 0) {
+        const sortedRecords = sortRecords(filteredRecords);
         const tableHTML = `
             <table>
-                <tr>
-                    <th>Дата</th>
-                    <th>Сотрудник</th>
-                    <th>Операция</th>
-                    <th>Сумма</th>
-                    <th>Объем</th>
-                    <th>Профит</th>
-                    <th>Спред</th>
-                </tr>
-                ${filteredRecords.map(record => `
+                <thead>
                     <tr>
-                        <td>${record['Дата']}</td>
-                        <td>${record['Сотрудник']}</td>
-                        <td>${record['Операция']}</td>
-                        <td>${record['Сумма']}</td>
-                        <td>${record['Объем']}</td>
-                        <td>${record['Профит']}</td>
-                        <td>${record['Спред']}</td>
+                        <th onclick="sortTable('Дата')">Дата</th>
+                        <th onclick="sortTable('Сотрудник')">Сотрудник</th>
+                        <th onclick="sortTable('Операция')">Операция</th>
+                        <th onclick="sortTable('Сумма')">Сумма</th>
+                        <th onclick="sortTable('Объем')">Объем</th>
+                        <th onclick="sortTable('Профит')">Профит</th>
+                        <th onclick="sortTable('Спред')">Спред</th>
                     </tr>
-                `).join('')}
+                </thead>
+                <tbody>
+                    ${sortedRecords.map(record => `
+                        <tr>
+                            <td>${record['Дата']}</td>
+                            <td>${record['Сотрудник']}</td>
+                            <td>${record['Операция']}</td>
+                            <td>${record['Сумма']}</td>
+                            <td>${record['Объем']}</td>
+                            <td>${record['Профит']}</td>
+                            <td>${record['Спред']}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
             </table>
         `;
         document.getElementById('data-display').innerHTML = tableHTML;
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
     }
+}
+
+function sortTable(column) {
+    if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+    }
+    updateDataDisplay();
+}
+
+function sortRecords(records) {
+    return records.sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+
+        if (aValue < bValue) {
+            return sortDirection === 'asc' ? -1 : 1;
+        } else if (aValue > bValue) {
+            return sortDirection === 'asc' ? 1 : -1;
+        } else {
+            return 0;
+        }
+    });
 }
