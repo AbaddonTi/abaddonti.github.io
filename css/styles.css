@@ -7,11 +7,13 @@ body {
 }
 
 .container {
-    width: 80%;
+    width: 90%;
+    max-width: 1200px;
     margin: 20px auto;
     padding: 20px;
     background-color: #fff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
 }
 
 h1 {
@@ -24,11 +26,13 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    gap: 20px;
     margin-bottom: 20px;
 }
 
 .filter-group {
-    flex: 1 1 calc(50% - 20px);
+    flex: 1 1 calc(50% - 10px);
+    min-width: 250px;
     margin-bottom: 20px;
 }
 
@@ -49,16 +53,17 @@ h1 {
 
 .results {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
+    gap: 20px;
 }
 
 .summary, .expenses {
-    flex: 1 1 45%;
+    flex: 1 1 calc(50% - 10px);
     padding: 20px;
     background-color: #f9f9f9;
     border: 1px solid #ddd;
     border-radius: 4px;
-    margin-bottom: 20px;
 }
 
 .summary h2, .expenses h2 {
