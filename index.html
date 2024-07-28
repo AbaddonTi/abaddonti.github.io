@@ -7,10 +7,10 @@
 </head>
 <body>
     <h1>Filter Data by Date Range</h1>
-    <label for="start-date">Start Date and Time:</label>
+    <label for="start-date">Start Date and Time (MSK):</label>
     <input type="datetime-local" id="start-date">
     <br>
-    <label for="end-date">End Date and Time:</label>
+    <label for="end-date">End Date and Time (MSK):</label>
     <input type="datetime-local" id="end-date">
     <br>
     <button onclick="filterData()">Filter Data</button>
@@ -45,9 +45,12 @@
                 return;
             }
 
+            const startDateUTC = new Date(startDate.getTime() - (startDate.getTimezoneOffset() * 6000));
+            const endDateUTC = new Date(endDate.getTime() - (endDate.getTimezoneOffset() * 6000));
+
             const filteredRecords = allRecords.filter(record => {
                 const recordDate = new Date(record['Дата']);
-                return recordDate >= startDate && recordDate <= endDate;
+                return recordDate >= startDateUTC && recordDate <= endDateUTC;
             });
 
             if (filteredRecords.length > 0) {
