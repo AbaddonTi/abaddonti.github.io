@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Фильтр данных по дате, команде и сотруднику</title>
+    <title>Общий анализ проекта</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
@@ -10,14 +10,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>Фильтр данных по дате, команде и сотруднику</h1>
+        <h1>Общий анализ проекта</h1>
         <div class="filters">
             <div class="filter-group">
-                <label for="start-date">Начальная дата и время (МСК):</label>
+                <label for="start-date">Начальная дата и время:</label>
                 <input type="datetime-local" id="start-date" onchange="filterData()">
             </div>
             <div class="filter-group">
-                <label for="end-date">Конечная дата и время (МСК):</label>
+                <label for="end-date">Конечная дата и время:</label>
                 <input type="datetime-local" id="end-date" onchange="filterData()">
             </div>
             <div class="filter-group">
