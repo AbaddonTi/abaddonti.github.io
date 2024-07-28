@@ -112,16 +112,18 @@
 
             if (filteredRecords.length > 0) {
                 const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
-                const spreadSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
-                const spreadAvg = (spreadSum / filteredRecords.length).toFixed(2);
+
+                const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
+                const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
+                const spreadAvg = (spreadSum / validSpreadRecords.length).toFixed(2);
 
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
                 document.getElementById('profit-display').innerHTML = `Общий профит: ${profitSum} $`;
-                document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg}`;
+                document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
             } else {
                 document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
                 document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
-                document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00';
+                document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
             }
         }
     </script>
