@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
-    <h1>Filter Data by Date Range and Team</h1>
+    <h1>Filter Data by Date Range, Team, and Employee</h1>
     <label for="start-date">Start Date and Time (MSK):</label>
     <input type="datetime-local" id="start-date">
     <br>
@@ -19,6 +19,11 @@
         <option value="Все">Все</option>
     </select>
     <br>
+    <label for="employee">Select Employee:</label>
+    <select id="employee">
+        <option value="Любой">Любой</option>
+    </select>
+    <br>
     <button onclick="filterData()">Filter Data</button>
     <pre id="data-display">Waiting for data...</pre>
     <div id="profit-display">Total Profit: </div>
@@ -26,10 +31,11 @@
     <script>
         let allRecords = [];
         let uniqueTeams = new Set();
+        let uniqueEmployees = new Set();
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата', 'Профит', 'Команда'],  // Запрашиваем колонки с датами, профитом и командой
+            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник'],  // Запрашиваем колонки с датами, профитом, командой и сотрудником
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
@@ -39,21 +45,23 @@
             if (mappedRecords) {
                 allRecords = mappedRecords;  // Сохраняем все записи
                 uniqueTeams = new Set(mappedRecords.map(record => record['Команда']));
-                updateTeamDropdown(uniqueTeams);
+                uniqueEmployees = new Set(mappedRecords.map(record => record['Сотрудник']));
+                updateDropdown('team', uniqueTeams, 'Все');
+                updateDropdown('employee', uniqueEmployees, 'Любой');
                 document.getElementById('data-display').innerHTML = 'Data loaded. Use the filters to filter.';
             } else {
                 console.error("Please map all columns correctly");
             }
         });
 
-        function updateTeamDropdown(teams) {
-            const teamSelect = document.getElementById('team');
-            teamSelect.innerHTML = '<option value="Все">Все</option>';
-            teams.forEach(team => {
+        function updateDropdown(dropdownId, items, defaultOption) {
+            const selectElement = document.getElementById(dropdownId);
+            selectElement.innerHTML = `<option value="${defaultOption}">${defaultOption}</option>`;
+            items.forEach(item => {
                 const option = document.createElement('option');
-                option.value = team;
-                option.text = team;
-                teamSelect.add(option);
+                option.value = item;
+                option.text = item;
+                selectElement.add(option);
             });
         }
 
@@ -61,6 +69,7 @@
             const startDate = luxon.DateTime.fromISO(document.getElementById('start-date').value, { zone: 'Europe/Moscow' });
             const endDate = luxon.DateTime.fromISO(document.getElementById('end-date').value, { zone: 'Europe/Moscow' });
             const selectedTeam = document.getElementById('team').value;
+            const selectedEmployee = document.getElementById('employee').value;
 
             if (!startDate.isValid || !endDate.isValid) {
                 document.getElementById('data-display').innerHTML = 'Please enter valid start and end dates.';
@@ -71,16 +80,17 @@
                 const recordDate = luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' });
                 const isInDateRange = recordDate >= startDate && recordDate <= endDate;
                 const isInTeam = selectedTeam === 'Все' || record['Команда'] === selectedTeam;
-                return isInDateRange && isInTeam;
+                const isInEmployee = selectedEmployee === 'Любой' || record['Сотрудник'] === selectedEmployee;
+                return isInDateRange && isInTeam && isInEmployee;
             });
 
             if (filteredRecords.length > 0) {
-                const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0);
+                const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
-                document.getElementById('profit-display').innerHTML = `Total Profit: ${profitSum}`;
+                document.getElementById('profit-display').innerHTML = `Total Profit: $${profitSum}`;
             } else {
-                document.getElementById('data-display').innerHTML = 'No records found in the specified date range and team.';
-                document.getElementById('profit-display').innerHTML = 'Total Profit: 0';
+                document.getElementById('data-display').innerHTML = 'No records found in the specified date range, team, and employee.';
+                document.getElementById('profit-display').innerHTML = 'Total Profit: $0.00';
             }
         }
     </script>
