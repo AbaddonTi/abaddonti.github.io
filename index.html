@@ -15,7 +15,7 @@
     <input type="datetime-local" id="end-date">
     <br>
     <label for="team">Select Team:</label>
-    <select id="team">
+    <select id="team" onchange="updateEmployeeDropdown()">
         <option value="Все">Все</option>
     </select>
     <br>
@@ -32,6 +32,7 @@
         let allRecords = [];
         let uniqueTeams = new Set();
         let uniqueEmployees = new Set();
+        let teamEmployeeMap = {};
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
@@ -45,14 +46,27 @@
             if (mappedRecords) {
                 allRecords = mappedRecords;  // Сохраняем все записи
                 uniqueTeams = new Set(mappedRecords.map(record => record['Команда']));
-                uniqueEmployees = new Set(mappedRecords.map(record => record['Сотрудник']));
+                teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
                 updateDropdown('team', uniqueTeams, 'Все');
-                updateDropdown('employee', uniqueEmployees, 'Любой');
+                updateEmployeeDropdown();
                 document.getElementById('data-display').innerHTML = 'Data loaded. Use the filters to filter.';
             } else {
                 console.error("Please map all columns correctly");
             }
         });
+
+        function buildTeamEmployeeMap(records) {
+            const map = {};
+            records.forEach(record => {
+                const team = record['Команда'];
+                const employee = record['Сотрудник'];
+                if (!map[team]) {
+                    map[team] = new Set();
+                }
+                map[team].add(employee);
+            });
+            return map;
+        }
 
         function updateDropdown(dropdownId, items, defaultOption) {
             const selectElement = document.getElementById(dropdownId);
@@ -63,6 +77,17 @@
                 option.text = item;
                 selectElement.add(option);
             });
+        }
+
+        function updateEmployeeDropdown() {
+            const selectedTeam = document.getElementById('team').value;
+            let employees = new Set();
+            if (selectedTeam === 'Все') {
+                allRecords.forEach(record => employees.add(record['Сотрудник']));
+            } else {
+                employees = teamEmployeeMap[selectedTeam] || new Set();
+            }
+            updateDropdown('employee', employees, 'Любой');
         }
 
         function filterData() {
@@ -87,10 +112,10 @@
             if (filteredRecords.length > 0) {
                 const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
-                document.getElementById('profit-display').innerHTML = `Total Profit: $${profitSum}`;
+                document.getElementById('profit-display').innerHTML = `Total Profit: ${profitSum} $`;
             } else {
                 document.getElementById('data-display').innerHTML = 'No records found in the specified date range, team, and employee.';
-                document.getElementById('profit-display').innerHTML = 'Total Profit: $0.00';
+                document.getElementById('profit-display').innerHTML = 'Total Profit: 0.00 $';
             }
         }
     </script>
