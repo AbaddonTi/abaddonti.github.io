@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
 </head>
 <body>
-    <h1>Фильтр данных по дате, команде и сотруднику2</h1>
+    <h1>Фильтр данных по дате, команде и сотруднику</h1>
     <label for="start-date">Начальная дата и время (МСК):</label>
     <input type="datetime-local" id="start-date" onchange="filterData()">
     <br>
@@ -126,9 +126,9 @@
                 filteredRecords.forEach(record => {
                     console.log(`Операция: ${record['Операция']}, Сумма: ${record['Сумма']}`);
                     const operationText = record['Операция'];
-                    if (recordHasColor(operationText, '#E1FEDE')) { // Зеленая ячейка
+                    if (record['Сумма'] && (operationText.includes('Пересчёт кассы') || operationText.includes('Перевод (получаем на счёт)'))) {
                         netIncome += parseFloat(record['Сумма'] || 0);
-                    } else if (recordHasColor(operationText, '#FECBCC')) { // Красная ячейка
+                    } else if (record['Сумма'] && (operationText.includes('Расходы на дропов') || operationText.includes('Перевод (снимаем с счёта)') || operationText.includes('Зарплаты'))) {
                         netIncome -= parseFloat(record['Сумма'] || 0);
                     }
                 });
@@ -146,16 +146,6 @@
                 document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
                 document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
             }
-        }
-
-        function recordHasColor(operationText, color) {
-            const dummyElement = document.createElement('div');
-            dummyElement.style.backgroundColor = color;
-            dummyElement.innerHTML = operationText;
-            document.body.appendChild(dummyElement);
-            const result = window.getComputedStyle(dummyElement).backgroundColor === color;
-            document.body.removeChild(dummyElement);
-            return result;
         }
 
         function formatCurrency(value) {
