@@ -29,6 +29,8 @@
     <div id="spread-display">Средний спред: </div>
     <div id="volume-display">Общий объем: </div>
     <div id="net-income-display">Чистая прибыль: </div>
+    <div id="total-expense-display">Общая сумма трат: </div>
+    <div id="expense-categories-display"></div>
 
     <script>
         let allRecords = [];
@@ -130,28 +132,48 @@
                 const formattedVolumeSum = formatCurrency(volumeSum);
 
                 let netIncome = 0;
+                let totalExpenses = 0;
+                const expenseCategorySums = {};
+
                 filteredRecords.forEach(record => {
-                    console.log(`Операция: ${record['Операция']}, Сумма: ${record['Сумма']}`);
                     const operationText = record['Операция'];
-                    if (record['Сумма'] && incomeOperations.includes(operationText)) {
-                        netIncome += parseFloat(record['Сумма'] || 0);
-                    } else if (record['Сумма'] && expenseOperations.includes(operationText)) {
-                        netIncome -= parseFloat(record['Сумма'] || 0);
+                    const amount = parseFloat(record['Сумма'] || 0);
+
+                    if (incomeOperations.includes(operationText)) {
+                        netIncome += amount;
+                    } else if (expenseOperations.includes(operationText)) {
+                        netIncome -= amount;
+                        totalExpenses += amount;
+
+                        if (!expenseCategorySums[operationText]) {
+                            expenseCategorySums[operationText] = 0;
+                        }
+                        expenseCategorySums[operationText] += amount;
                     }
                 });
+
                 const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
+                const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
 
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
                 document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
                 document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
                 document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
                 document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
+                document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
+
+                const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
+                    return `<div>${category}: ${formatCurrency(sum.toFixed(2))} $</div>`;
+                }).join('');
+                document.getElementById('expense-categories-display').innerHTML = expenseCategoriesHTML;
             } else {
                 document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
                 document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
                 document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
                 document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
                 document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
+                document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
+                document.getElementById('expense-categories-display').innerHTML = '';
             }
         }
 
