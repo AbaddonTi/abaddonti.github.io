@@ -16,13 +16,14 @@
     <br>
     <button onclick="filterData()">Filter Data</button>
     <pre id="data-display">Waiting for data...</pre>
+    <div id="profit-display">Total Profit: </div>
 
     <script>
         let allRecords = [];
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата'],  // Запрашиваем колонку с датами
+            columns: ['Дата', 'Профит'],  // Запрашиваем колонки с датами и профитом
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
@@ -52,9 +53,12 @@
             });
 
             if (filteredRecords.length > 0) {
+                const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0);
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
+                document.getElementById('profit-display').innerHTML = `Total Profit: ${profitSum}`;
             } else {
                 document.getElementById('data-display').innerHTML = 'No records found in the specified date range.';
+                document.getElementById('profit-display').innerHTML = 'Total Profit: 0';
             }
         }
     </script>
