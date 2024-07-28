@@ -25,7 +25,7 @@ grist.onRecords(function(records, mappings) {
         updateDropdown('team', uniqueTeams, 'Все');
         updateEmployeeDropdown();
         updateExpenseButtons();
-        document.getElementById('data-display').innerHTML = 'Данные загружены. Выставите даты';
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
     } else {
         console.error("Please map all columns correctly");
     }
@@ -120,7 +120,7 @@ function filterData() {
         const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
         const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
 
-        document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
         document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
         document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
@@ -132,7 +132,7 @@ function filterData() {
         }).join('');
         document.getElementById('expense-buttons').innerHTML = expenseCategoriesHTML;
     } else {
-        document.getElementById('data-display').innerHTML = 'Записи не найдены в указанном диапазоне дат, команды и сотрудника.';
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
         document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
         document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
