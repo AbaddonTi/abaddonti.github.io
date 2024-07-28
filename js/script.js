@@ -2,8 +2,8 @@ let allRecords = [];
 let uniqueTeams = new Set();
 let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
-let sortColumn = '';
-let sortDirection = 'asc';
+let sortColumn = 'Дата';
+let sortDirection = 'desc'; // По умолчанию сортировка по убыванию
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -28,6 +28,7 @@ grist.onRecords(function(records, mappings) {
         updateEmployeeDropdown();
         updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+        updateDataDisplay(); // Обновление данных при загрузке
     } else {
         console.error("Please map all columns correctly");
     }
@@ -177,13 +178,13 @@ function updateDataDisplay() {
             <table>
                 <thead>
                     <tr>
-                        <th onclick="sortTable('Дата')">Дата</th>
-                        <th onclick="sortTable('Сотрудник')">Сотрудник</th>
-                        <th onclick="sortTable('Операция')">Операция</th>
-                        <th onclick="sortTable('Сумма')">Сумма</th>
-                        <th onclick="sortTable('Объем')">Объем</th>
-                        <th onclick="sortTable('Профит')">Профит</th>
-                        <th onclick="sortTable('Спред')">Спред</th>
+                        <th onclick="sortTable('Дата')">Дата <span class="sort-arrow ${sortColumn === 'Дата' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Сотрудник')">Сотрудник <span class="sort-arrow ${sortColumn === 'Сотрудник' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Операция')">Операция <span class="sort-arrow ${sortColumn === 'Операция' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Сумма')">Сумма <span class="sort-arrow ${sortColumn === 'Сумма' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Объем')">Объем <span class="sort-arrow ${sortColumn === 'Объем' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Профит')">Профит <span class="sort-arrow ${sortColumn === 'Профит' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Спред')">Спред <span class="sort-arrow ${sortColumn === 'Спред' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
                     </tr>
                 </thead>
                 <tbody>
