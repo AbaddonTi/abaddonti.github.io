@@ -5,9 +5,10 @@ let teamEmployeeMap = {};
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
-    'Аренда недвижимости / ЖКХ', 'Зарплаты', 'Ошибка воркера',
-    'Перевод (снимаем с счёта)', 'Представительские расходы',
-    'Прочее', 'Расходы на дропов', 'Сим карты'
+    'Апелляция', 'Аренда недвижимости / ЖКХ', 'Бытовые',
+    'Долги', 'Еда', 'Зарплаты', 'Комиссии', 'Логистика', 'Ошибка воркера',
+    'Представительские расходы', 'Прочее', 'Расходы на дропов',
+    'Сим карты', 'Софт, подписки', 'Техника'
 ];
 
 grist.ready({
@@ -23,7 +24,7 @@ grist.onRecords(function(records, mappings) {
         teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
         updateDropdown('team', uniqueTeams, 'Все');
         updateEmployeeDropdown();
-        document.getElementById('data-display').innerHTML = 'Данные загружены. Используйте фильтры для фильтрации.';
+        document.getElementById('data-display').innerHTML = 'Данные загружены. Выставите даты';
     } else {
         console.error("Please map all columns correctly");
     }
