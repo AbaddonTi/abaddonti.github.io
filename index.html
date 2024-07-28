@@ -36,6 +36,13 @@
         let uniqueEmployees = new Set();
         let teamEmployeeMap = {};
 
+        const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
+        const expenseOperations = [
+            'Аренда недвижимости / ЖКХ', 'Зарплаты', 'Ошибка воркера',
+            'Перевод (снимаем с счёта)', 'Представительские расходы',
+            'Прочее', 'Расходы на дропов', 'Сим карты'
+        ];
+
         // Уведомляем Grist о готовности виджета
         grist.ready({
             columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем', 'Операция', 'Сумма'],  // Запрашиваем колонки с датами, профитом, командой, сотрудником, спредом, объемом, операцией и суммой
@@ -126,9 +133,9 @@
                 filteredRecords.forEach(record => {
                     console.log(`Операция: ${record['Операция']}, Сумма: ${record['Сумма']}`);
                     const operationText = record['Операция'];
-                    if (record['Сумма'] && (operationText.includes('Пересчёт кассы') || operationText.includes('Перевод (получаем на счёт)'))) {
+                    if (record['Сумма'] && incomeOperations.includes(operationText)) {
                         netIncome += parseFloat(record['Сумма'] || 0);
-                    } else if (record['Сумма'] && (operationText.includes('Расходы на дропов') || operationText.includes('Перевод (снимаем с счёта)') || operationText.includes('Зарплаты'))) {
+                    } else if (record['Сумма'] && expenseOperations.includes(operationText)) {
                         netIncome -= parseFloat(record['Сумма'] || 0);
                     }
                 });
