@@ -9,29 +9,45 @@
     <script defer src="js/script.js"></script>
 </head>
 <body>
-    <h1>Фильтр данных по дате, команде и сотруднику</h1>
-    <label for="start-date">Начальная дата и время (МСК):</label>
-    <input type="datetime-local" id="start-date" onchange="filterData()">
-    <br>
-    <label for="end-date">Конечная дата и время (МСК):</label>
-    <input type="datetime-local" id="end-date" onchange="filterData()">
-    <br>
-    <label for="team">Выбор команды:</label>
-    <select id="team" onchange="updateEmployeeDropdown(); filterData();">
-        <option value="Все">Все</option>
-    </select>
-    <br>
-    <label for="employee">Выбор сотрудника:</label>
-    <select id="employee" onchange="filterData()">
-        <option value="Любой">Любой</option>
-    </select>
-    <br>
-    <pre id="data-display">Ожидание данных...</pre>
-    <div id="profit-display">Общий профит: </div>
-    <div id="spread-display">Средний спред: </div>
-    <div id="volume-display">Общий объем: </div>
-    <div id="net-income-display">Чистая прибыль: </div>
-    <div id="total-expense-display">Общая сумма трат: </div>
-    <div id="expense-categories-display"></div>
+    <div class="container">
+        <h1>Фильтр данных по дате, команде и сотруднику</h1>
+        <div class="filters">
+            <div class="filter-group">
+                <label for="start-date">Начальная дата и время (МСК):</label>
+                <input type="datetime-local" id="start-date" onchange="filterData()">
+            </div>
+            <div class="filter-group">
+                <label for="end-date">Конечная дата и время (МСК):</label>
+                <input type="datetime-local" id="end-date" onchange="filterData()">
+            </div>
+            <div class="filter-group">
+                <label for="team">Выбор команды:</label>
+                <select id="team" onchange="updateEmployeeDropdown(); filterData();">
+                    <option value="Все">Все</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="employee">Выбор сотрудника:</label>
+                <select id="employee" onchange="filterData()">
+                    <option value="Любой">Любой</option>
+                </select>
+            </div>
+        </div>
+        <div class="results">
+            <div class="summary">
+                <h2>Общая сводка по бизнесу:</h2>
+                <div id="profit-display">Общий профит: </div>
+                <div id="spread-display">Средний спред: </div>
+                <div id="volume-display">Общий объем: </div>
+                <div id="net-income-display">Чистая прибыль: </div>
+                <div id="total-expense-display">Общая сумма трат: </div>
+            </div>
+            <div class="expenses">
+                <h2>Расходы:</h2>
+                <div id="expense-categories-display"></div>
+            </div>
+        </div>
+        <pre id="data-display">Ожидание данных...</pre>
+    </div>
 </body>
 </html>
