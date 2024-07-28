@@ -27,6 +27,8 @@
     <button onclick="filterData()">Filter Data</button>
     <pre id="data-display">Waiting for data...</pre>
     <div id="profit-display">Total Profit: </div>
+    <div id="spread-display">Average Spread: </div>
+    <div id="volume-display">Total Volume: </div>
 
     <script>
         let allRecords = [];
@@ -36,7 +38,7 @@
 
         // Уведомляем Grist о готовности виджета
         grist.ready({
-            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник'],  // Запрашиваем колонки с датами, профитом, командой и сотрудником
+            columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем'],  // Запрашиваем колонки с датами, профитом, командой, сотрудником, спредом и объемом
             requiredAccess: 'read table'  // Устанавливаем уровень доступа для чтения данных таблицы
         });
 
@@ -111,11 +113,20 @@
 
             if (filteredRecords.length > 0) {
                 const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
+                const spreads = filteredRecords.map(record => parseFloat(record['Спред'].replace(',', '.').replace('%', '')) || 0);
+                const averageSpread = (spreads.reduce((sum, spread) => sum + spread, 0) / spreads.length).toFixed(2);
+                const volumes = filteredRecords.map(record => parseFloat(record['Объем'].replace(/\s+/g, '').replace('$', '')) || 0);
+                const totalVolume = volumes.reduce((sum, volume) => sum + volume, 0).toLocaleString('en-US');
+
                 document.getElementById('data-display').innerHTML = filteredRecords.map(record => JSON.stringify(record)).join('\n');
                 document.getElementById('profit-display').innerHTML = `Total Profit: ${profitSum} $`;
+                document.getElementById('spread-display').innerHTML = `Average Spread: ${averageSpread} %`;
+                document.getElementById('volume-display').innerHTML = `Total Volume: ${totalVolume} $`;
             } else {
                 document.getElementById('data-display').innerHTML = 'No records found in the specified date range, team, and employee.';
                 document.getElementById('profit-display').innerHTML = 'Total Profit: 0.00 $';
+                document.getElementById('spread-display').innerHTML = 'Average Spread: 0.00 %';
+                document.getElementById('volume-display').innerHTML = 'Total Volume: 0 $';
             }
         }
     </script>
