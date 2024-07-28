@@ -3,7 +3,7 @@ let uniqueTeams = new Set();
 let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
 let sortColumn = 'Дата';
-let sortDirection = 'desc'; // По умолчанию сортировка по убыванию
+let sortDirection = 'desc';
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -28,7 +28,7 @@ grist.onRecords(function(records, mappings) {
         updateEmployeeDropdown();
         updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-        updateDataDisplay(); // Обновление данных при загрузке
+        filterData(); 
     } else {
         console.error("Please map all columns correctly");
     }
@@ -143,6 +143,8 @@ function filterData() {
         document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
         document.getElementById('expense-buttons').innerHTML = '';
     }
+
+    updateDataDisplay();
 }
 
 function formatCurrency(value) {
