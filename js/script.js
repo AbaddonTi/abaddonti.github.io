@@ -4,7 +4,7 @@ let uniqueTeams = new Set();
 let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
 let sortColumn = 'Дата';
-let sortDirection = 'desc';
+let sortDirection = 'desc'; 
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -13,7 +13,6 @@ const expenseOperations = [
     'Представительские расходы', 'Прочее', 'Расходы на дропов',
     'Сим карты', 'Софт, подписки', 'Техника'
 ];
-const summaryOperations = ['Общий профит', 'Средний спред', 'Общий объем', 'Чистая прибыль', 'Общая сумма трат'];
 
 grist.ready({
     columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем', 'Операция', 'Сумма'],  
@@ -28,7 +27,6 @@ grist.onRecords(function(records, mappings) {
         teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
         updateDropdown('team', uniqueTeams, 'Все');
         updateEmployeeDropdown();
-        updateSummaryButtons();
         updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         filterData(); 
@@ -72,20 +70,6 @@ function updateEmployeeDropdown() {
     updateDropdown('employee', employees, 'Любой');
 }
 
-function updateSummaryButtons() {
-    const summaryButtonsHTML = summaryOperations.map(operation => {
-        return `<button class="summary-button" data-category="${operation}" onclick="toggleSummary(this)">${operation}</button>`;
-    }).join('');
-    document.getElementById('business-summary-buttons').innerHTML = `<div class="summary-buttons-container">${summaryButtonsHTML}</div>`;
-}
-
-function updateExpenseButtons() {
-    const expenseButtonsHTML = expenseOperations.map(operation => {
-        return `<button class="expense-button" data-category="${operation}" onclick="toggleExpense(this)">${operation}</button>`;
-    }).join('');
-    document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseButtonsHTML}</div>`;
-}
-
 function filterData() {
     const startDate = luxon.DateTime.fromISO(document.getElementById('start-date').value, { zone: 'Europe/Moscow' });
     const endDate = luxon.DateTime.fromISO(document.getElementById('end-date').value, { zone: 'Europe/Moscow' });
@@ -105,6 +89,62 @@ function filterData() {
         return isInDateRange && isInTeam && isInEmployee;
     });
 
+    if (filteredRecords.length > 0) {
+        const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
+        const formattedProfitSum = formatCurrency(profitSum);
+
+        const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
+        const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
+        const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
+
+        const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'] || 0), 0).toFixed(2);
+        const formattedVolumeSum = formatCurrency(volumeSum);
+
+        let netIncome = 0;
+        let totalExpenses = 0;
+        const expenseCategorySums = {};
+
+        filteredRecords.forEach(record => {
+            const operationText = record['Операция'];
+            const amount = parseFloat(record['Сумма'] || 0);
+
+            if (incomeOperations.includes(operationText)) {
+                netIncome += amount;
+            } else if (expenseOperations.includes(operationText)) {
+                netIncome -= amount;
+                totalExpenses += amount;
+
+                if (!expenseCategorySums[operationText]) {
+                    expenseCategorySums[operationText] = 0;
+                }
+                expenseCategorySums[operationText] += amount;
+            }
+        });
+
+        const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
+        const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
+
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+        document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
+        document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
+        document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
+        document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
+        document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
+
+        const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
+            return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
+        }).join('');
+        document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
+    } else {
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+        document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
+        document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
+        document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
+        document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
+        document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
+        document.getElementById('expense-buttons').innerHTML = '';
+    }
+
     updateDataDisplay();
 }
 
@@ -117,30 +157,12 @@ function formatDate(dateString) {
     return date.toFormat('dd.MM.yyyy HH:mm');
 }
 
-function toggleSummary(button) {
-    button.classList.toggle('active');
-    updateDataDisplay();
-}
-
 function toggleExpense(button) {
     button.classList.toggle('active');
     updateDataDisplay();
 }
 
-function toggleAllBusinessButtons() {
-    const buttons = document.querySelectorAll('.summary-button');
-    const allActive = [...buttons].every(button => button.classList.contains('active'));
-    buttons.forEach(button => {
-        if (allActive) {
-            button.classList.remove('active');
-        } else {
-            button.classList.add('active');
-        }
-    });
-    updateDataDisplay();
-}
-
-function toggleAllExpenseButtons() {
+function toggleAllButtons() {
     const buttons = document.querySelectorAll('.expense-button');
     const allActive = [...buttons].every(button => button.classList.contains('active'));
     buttons.forEach(button => {
@@ -154,11 +176,9 @@ function toggleAllExpenseButtons() {
 }
 
 function updateDataDisplay() {
-    const activeSummaryButtons = document.querySelectorAll('.summary-button.active');
-    const activeSummaryCategories = [...activeSummaryButtons].map(button => button.getAttribute('data-category'));
-    const activeExpenseButtons = document.querySelectorAll('.expense-button.active');
-    const activeExpenseCategories = [...activeExpenseButtons].map(button => button.getAttribute('data-category'));
-    const activeFilteredRecords = filteredRecords.filter(record => activeExpenseCategories.includes(record['Операция']));
+    const activeButtons = document.querySelectorAll('.expense-button.active');
+    const activeCategories = [...activeButtons].map(button => button.getAttribute('data-category'));
+    const activeFilteredRecords = filteredRecords.filter(record => activeCategories.includes(record['Операция']));
 
     if (activeFilteredRecords.length > 0) {
         const sortedRecords = sortRecords(activeFilteredRecords);
