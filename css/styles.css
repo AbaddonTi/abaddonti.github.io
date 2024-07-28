@@ -144,3 +144,7 @@ th .sort-arrow {
 th .sort-arrow.asc {
     transform: translateY(-50%) rotate(180deg);
 }
+
+tr:hover {
+    background-color: #e6f7e6;
+}
