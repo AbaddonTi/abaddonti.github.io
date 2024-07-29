@@ -91,19 +91,7 @@ function filterData() {
     });
 
     if (filteredRecords.length > 0) {
-        const dailyProfits = filteredRecords.reduce((acc, record) => {
-            const date = luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' }).toFormat('yyyy-MM-dd');
-            if (!acc[date]) {
-                acc[date] = 0;
-            }
-            acc[date] += parseFloat(record['Профит']);
-            return acc;
-        }, {});
-
-        const labels = Object.keys(dailyProfits);
-        const profits = Object.values(dailyProfits);
-
-        const profitSum = profits.reduce((sum, profit) => sum + profit, 0).toFixed(2);
+        const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
         const formattedProfitSum = formatCurrency(profitSum);
 
         const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
@@ -149,7 +137,7 @@ function filterData() {
         }).join('');
         document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
 
-        updateChart(labels, profits);
+        updateChart(filteredRecords);
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
@@ -158,7 +146,7 @@ function filterData() {
         document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
         document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
         document.getElementById('expense-buttons').innerHTML = '';
-        updateChart([], []);
+        updateChart([]);
     }
 
     updateDataDisplay();
@@ -332,9 +320,11 @@ function initializeChart() {
     });
 }
 
-function updateChart(labels, data) {
+function updateChart(data) {
+    const labels = data.map(record => luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' }).toISO());
+    const profits = data.map(record => parseFloat(record['Профит']));
     profitChart.data.labels = labels;
-    profitChart.data.datasets[0].data = data;
-    profitChart.resetZoom(); 
+    profitChart.data.datasets[0].data = profits;
+    profitChart.resetZoom();
     profitChart.update();
 }
