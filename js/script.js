@@ -136,8 +136,8 @@ function filterData() {
             return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
         }).join('');
         document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
+
         updateChart(filteredRecords);
-        
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
@@ -146,6 +146,7 @@ function filterData() {
         document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
         document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
         document.getElementById('expense-buttons').innerHTML = '';
+
         updateChart([]);
     }
 
@@ -296,7 +297,7 @@ function initializeChart() {
 }
 
 function updateChart(data) {
-    const labels = data.map(record => record['Дата']);
+    const labels = data.map(record => luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' }).toISO());
     const profits = data.map(record => parseFloat(record['Профит']));
     profitChart.data.labels = labels;
     profitChart.data.datasets[0].data = profits;
