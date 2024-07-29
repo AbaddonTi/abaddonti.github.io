@@ -5,6 +5,7 @@ let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
 let sortColumn = 'Дата';
 let sortDirection = 'desc'; 
+let profitChart;
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -92,49 +93,51 @@ function filterData() {
     if (filteredRecords.length > 0) {
         const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
         const formattedProfitSum = formatCurrency(profitSum);
-
+    
         const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
         const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
         const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
-
+    
         const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'] || 0), 0).toFixed(2);
         const formattedVolumeSum = formatCurrency(volumeSum);
-
+    
         let netIncome = 0;
         let totalExpenses = 0;
         const expenseCategorySums = {};
-
+    
         filteredRecords.forEach(record => {
             const operationText = record['Операция'];
             const amount = parseFloat(record['Сумма'] || 0);
-
+    
             if (incomeOperations.includes(operationText)) {
                 netIncome += amount;
             } else if (expenseOperations.includes(operationText)) {
                 netIncome -= amount;
                 totalExpenses += amount;
-
+    
                 if (!expenseCategorySums[operationText]) {
                     expenseCategorySums[operationText] = 0;
                 }
                 expenseCategorySums[operationText] += amount;
             }
         });
-
+    
         const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
         const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
-
+    
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
         document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
         document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
         document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
         document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
-
+    
         const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
             return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
         }).join('');
         document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
+    
+        createProfitChart(filteredRecords); 
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
         document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
@@ -143,9 +146,14 @@ function filterData() {
         document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
         document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
         document.getElementById('expense-buttons').innerHTML = '';
+    
+        if (profitChart) {
+            profitChart.destroy(); 
+        }
     }
-
+    
     updateDataDisplay();
+
 }
 
 function formatCurrency(value) {
@@ -215,6 +223,50 @@ function updateDataDisplay() {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
     }
 }
+
+
+function createProfitChart(data) {
+    const ctx = document.getElementById('profitChart').getContext('2d');
+    if (profitChart) {
+        profitChart.destroy();
+    }
+    profitChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(record => formatDate(record['Дата'])),
+            datasets: [{
+                label: 'Общий профит',
+                data: data.map(record => parseFloat(record['Профит'])),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'DD/MM/YYYY',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Дата'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Общий профит ($)'
+                    }
+                }
+            }
+        }
+    });
+}
+
 
 function sortTable(column) {
     if (sortColumn === column) {
