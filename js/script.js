@@ -78,7 +78,7 @@ function filterData() {
     const selectedEmployee = document.getElementById('employee').value;
 
     if (!startDate.isValid || !endDate.isValid) {
-        document.getElementById('data-display').innerHTML = 'Пожалуйста, введите корректные начальную и конечную даты.';
+        document.getElementById('data-display').innerHTML = 'Пожалуйста, введите корректные начальную и конечные даты.';
         return;
     }
 
@@ -137,6 +137,10 @@ function filterData() {
         }).join('');
         document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
 
+        if (typeof updateExpenseButtons === 'function') {
+            updateExpenseButtons();
+        }
+
         updateChart(filteredRecords);
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
@@ -152,6 +156,7 @@ function filterData() {
 
     updateDataDisplay();
 }
+
 
 function formatCurrency(value) {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -263,7 +268,8 @@ function initializeChart() {
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderWidth: 1,
                 fill: true,
-                lineTension: 0.1
+                lineTension: 0.1,
+                showLine: true
             }]
         },
         options: {
@@ -306,6 +312,7 @@ function initializeChart() {
         }
     });
 }
+
 
 function updateChart(data) {
     const labels = data.map(record => luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' }).toISO());
