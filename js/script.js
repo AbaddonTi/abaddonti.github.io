@@ -1,9 +1,7 @@
-import { updateDropdown, formatCurrency, formatDate } from './modules/domUtils.js';
-import { buildTeamEmployeeMap, filterData } from './modules/dataUtils.js';
-
 let allRecords = [];
 let filteredRecords = [];
 let uniqueTeams = new Set();
+let uniqueEmployees = new Set();
 let teamEmployeeMap = {};
 let sortColumn = 'Дата';
 let sortDirection = 'desc'; 
@@ -22,7 +20,7 @@ grist.ready({
     requiredAccess: 'read table'
 });
 
-grist.onRecords((records) => {
+grist.onRecords(function(records, mappings) {
     const mappedRecords = grist.mapColumnNames(records);
     if (mappedRecords) {
         allRecords = mappedRecords;  
@@ -32,11 +30,35 @@ grist.onRecords((records) => {
         updateEmployeeDropdown();
         updateExpenseButtons();
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-        filterDataAndDisplay(); 
+        filterData(); 
     } else {
         console.error("Please map all columns correctly");
     }
 });
+
+function buildTeamEmployeeMap(records) {
+    const map = {};
+    records.forEach(record => {
+        const team = record['Команда'];
+        const employee = record['Сотрудник'];
+        if (!map[team]) {
+            map[team] = new Set();
+        }
+        map[team].add(employee);
+    });
+    return map;
+}
+
+function updateDropdown(dropdownId, items, defaultOption) {
+    const selectElement = document.getElementById(dropdownId);
+    selectElement.innerHTML = `<option value="${defaultOption}">${defaultOption}</option>`;
+    items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item;
+        option.text = item;
+        selectElement.add(option);
+    });
+}
 
 function updateEmployeeDropdown() {
     const selectedTeam = document.getElementById('team').value;
@@ -49,7 +71,7 @@ function updateEmployeeDropdown() {
     updateDropdown('employee', employees, 'Любой');
 }
 
-function filterDataAndDisplay() {
+function filterData() {
     const startDate = luxon.DateTime.fromISO(document.getElementById('start-date').value, { zone: 'Europe/Moscow' });
     const endDate = luxon.DateTime.fromISO(document.getElementById('end-date').value, { zone: 'Europe/Moscow' });
     const selectedTeam = document.getElementById('team').value;
@@ -60,76 +82,83 @@ function filterDataAndDisplay() {
         return;
     }
 
-    filteredRecords = filterData(allRecords, { startDate, endDate, selectedTeam, selectedEmployee });
+    filteredRecords = allRecords.filter(record => {
+        const recordDate = luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' });
+        const isInDateRange = recordDate >= startDate && recordDate <= endDate;
+        const isInTeam = selectedTeam === 'Все' || record['Команда'] === selectedTeam;
+        const isInEmployee = selectedEmployee === 'Любой' || record['Сотрудник'] === selectedEmployee;
+        return isInDateRange && isInTeam && isInEmployee;
+    });
 
     if (filteredRecords.length > 0) {
-        displayFilteredData();
+        const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
+        const formattedProfitSum = formatCurrency(profitSum);
+
+        const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
+        const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
+        const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
+
+        const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'] || 0), 0).toFixed(2);
+        const formattedVolumeSum = formatCurrency(volumeSum);
+
+        let netIncome = 0;
+        let totalExpenses = 0;
+        const expenseCategorySums = {};
+
+        filteredRecords.forEach(record => {
+            const operationText = record['Операция'];
+            const amount = parseFloat(record['Сумма'] || 0);
+
+            if (incomeOperations.includes(operationText)) {
+                netIncome += amount;
+            } else if (expenseOperations.includes(operationText)) {
+                netIncome -= amount;
+                totalExpenses += amount;
+
+                if (!expenseCategorySums[operationText]) {
+                    expenseCategorySums[operationText] = 0;
+                }
+                expenseCategorySums[operationText] += amount;
+            }
+        });
+
+        const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
+        const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
+
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+        document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
+        document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
+        document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
+        document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
+        document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
+
+        const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
+            return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
+        }).join('');
+        document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
+
+        updateChart(filteredRecords);
     } else {
-        resetDisplay();
+        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+        document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
+        document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
+        document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
+        document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
+        document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
+        document.getElementById('expense-buttons').innerHTML = '';
+        updateChart([]);
     }
 
     updateDataDisplay();
 }
 
-function displayFilteredData() {
-    const profitSum = filteredRecords.reduce((sum, { 'Профит': profit }) => sum + parseFloat(profit || 0), 0).toFixed(2);
-    const formattedProfitSum = formatCurrency(profitSum);
-
-    const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
-    const spreadSum = validSpreadRecords.reduce((sum, { 'Спред': spread }) => sum + parseFloat(spread || 0), 0);
-    const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
-
-    const volumeSum = filteredRecords.reduce((sum, { 'Объем': volume }) => sum + parseFloat(volume || 0), 0).toFixed(2);
-    const formattedVolumeSum = formatCurrency(volumeSum);
-
-    let netIncome = 0;
-    let totalExpenses = 0;
-    const expenseCategorySums = {};
-
-    filteredRecords.forEach(record => {
-        const operationText = record['Операция'];
-        const amount = parseFloat(record['Сумма'] || 0);
-
-        if (incomeOperations.includes(operationText)) {
-            netIncome += amount;
-        } else if (expenseOperations.includes(operationText)) {
-            netIncome -= amount;
-            totalExpenses += amount;
-
-            if (!expenseCategorySums[operationText]) {
-                expenseCategorySums[operationText] = 0;
-            }
-            expenseCategorySums[operationText] += amount;
-        }
-    });
-
-    const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
-    const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
-
-    document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-    document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
-    document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
-    document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
-    document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
-    document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
-
-    const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
-        return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
-    }).join('');
-    document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
-
-    updateChart(filteredRecords);
+function formatCurrency(value) {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-function resetDisplay() {
-    document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-    document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
-    document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
-    document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
-    document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
-    document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
-    document.getElementById('expense-buttons').innerHTML = '';
-    updateChart([]);
+function formatDate(dateString) {
+    const date = luxon.DateTime.fromISO(dateString, { zone: 'Europe/Moscow' });
+    return date.toFormat('dd.MM.yyyy HH:mm');
 }
 
 function toggleExpense(button) {
@@ -141,7 +170,11 @@ function toggleAllButtons() {
     const buttons = document.querySelectorAll('.expense-button');
     const allActive = [...buttons].every(button => button.classList.contains('active'));
     buttons.forEach(button => {
-        button.classList.toggle('active', !allActive);
+        if (allActive) {
+            button.classList.remove('active');
+        } else {
+            button.classList.add('active');
+        }
     });
     updateDataDisplay();
 }
@@ -152,44 +185,48 @@ function updateDataDisplay() {
     const activeFilteredRecords = filteredRecords.filter(record => activeCategories.includes(record['Операция']));
 
     if (activeFilteredRecords.length > 0) {
-        displaySortedRecords(activeFilteredRecords);
+        const sortedRecords = sortRecords(activeFilteredRecords);
+        const tableHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('Дата')">Дата <span class="sort-arrow ${sortColumn === 'Дата' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Сотрудник')">Сотрудник <span class="sort-arrow ${sortColumn === 'Сотрудник' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Операция')">Операция <span class="sort-arrow ${sortColumn === 'Операция' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Сумма')">Сумма <span class="sort-arrow ${sortColumn === 'Сумма' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Объем')">Объем <span class="sort-arrow ${sortColumn === 'Объем' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Профит')">Профит <span class="sort-arrow ${sortColumn === 'Профит' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                        <th onclick="sortTable('Спред')">Спред <span class="sort-arrow ${sortColumn === 'Спред' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sortedRecords.map(record => `
+                        <tr>
+                            <td>${formatDate(record['Дата'])}</td>
+                            <td>${record['Сотрудник']}</td>
+                            <td>${record['Операция']}</td>
+                            <td>${record['Сумма']}</td>
+                            <td>${record['Объем']}</td>
+                            <td>${record['Профит']}</td>
+                            <td>${record['Спред']}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        document.getElementById('data-display').innerHTML = tableHTML;
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
     }
 }
 
-function displaySortedRecords(records) {
-    const sortedRecords = sortRecords(records);
-    const tableHTML = `
-        <table>
-            <thead>
-                <tr>
-                    ${['Дата', 'Сотрудник', 'Операция', 'Сумма', 'Объем', 'Профит', 'Спред'].map(column => `
-                        <th onclick="sortTable('${column}')">${column} <span class="sort-arrow ${sortColumn === column ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                    `).join('')}
-                </tr>
-            </thead>
-            <tbody>
-                ${sortedRecords.map(record => `
-                    <tr>
-                        <td>${formatDate(record['Дата'])}</td>
-                        <td>${record['Сотрудник']}</td>
-                        <td>${record['Операция']}</td>
-                        <td>${record['Сумма']}</td>
-                        <td>${record['Объем']}</td>
-                        <td>${record['Профит']}</td>
-                        <td>${record['Спред']}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-    document.getElementById('data-display').innerHTML = tableHTML;
-}
-
 function sortTable(column) {
-    sortDirection = (sortColumn === column) ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'asc';
-    sortColumn = column;
+    if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+    }
     updateDataDisplay();
 }
 
@@ -197,13 +234,20 @@ function sortRecords(records) {
     return records.sort((a, b) => {
         const aValue = a[sortColumn];
         const bValue = b[sortColumn];
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
+
+        if (aValue < bValue) {
+            return sortDirection === 'asc' ? -1 : 1;
+        } else if (aValue > bValue) {
+            return sortDirection === 'asc' ? 1 : -1;
+        } else {
+            return 0;
+        }
     });
 }
 
-document.addEventListener('DOMContentLoaded', initializeChart);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeChart();
+});
 
 function initializeChart() {
     const ctx = document.getElementById('profitChart').getContext('2d');
@@ -250,7 +294,7 @@ function initializeChart() {
                         enabled: true,
                         mode: 'xy',
                         threshold: 10,
-                        onPan: ({chart}) => chart.update('none')
+                        onPan: function({chart}) { chart.update('none'); }
                     },
                     zoom: {
                         drag: {
@@ -259,7 +303,7 @@ function initializeChart() {
                             borderWidth: 1,
                             backgroundColor: 'rgba(75, 192, 192, 0.15)',
                             mode: 'xy',
-                            onZoom: ({chart}) => chart.update('none')
+                            onZoom: function({chart}) { chart.update('none'); }
                         },
                         wheel: {
                             enabled: true  
