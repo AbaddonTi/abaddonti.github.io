@@ -104,7 +104,7 @@ function filterData() {
     
         let netIncome = 0;
         let totalExpenses = 0;
-        expenseCategorySums = {};
+        const expenseCategorySums = {};
     
         filteredRecords.forEach(record => {
             const operationText = record['Операция'];
@@ -133,7 +133,7 @@ function filterData() {
         document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
         document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
     
-        updateExpenseButtons();
+        updateExpenseButtons(); 
     
         createProfitChart(filteredRecords); 
     } else {
@@ -154,6 +154,7 @@ function filterData() {
     updateDataDisplay();
 
 }
+
 
 function updateExpenseButtons() {
     const expenseButtonsHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
@@ -231,17 +232,17 @@ function updateDataDisplay() {
 }
 
 function createProfitChart(data) {
-    luxon.Settings.defaultZone = "Europe/Moscow";  
+    luxon.Settings.defaultZone = "Europe/Moscow"; 
     const ctx = document.getElementById('profitChart').getContext('2d');
     if (profitChart) {
-        profitChart.data.labels = data.map(record => formatDate(record['Дата']));
+        profitChart.data.labels = data.map(record => luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' }).toFormat('dd.MM.yyyy HH:mm'));
         profitChart.data.datasets[0].data = data.map(record => parseFloat(record['Профит']));
         profitChart.update();
     } else {
         profitChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: data.map(record => formatDate(record['Дата'])),
+                labels: data.map(record => luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' }).toFormat('dd.MM.yyyy HH:mm')),
                 datasets: [{
                     label: 'Общий профит',
                     data: data.map(record => parseFloat(record['Профит'])),
@@ -275,6 +276,7 @@ function createProfitChart(data) {
         });
     }
 }
+
 
 function sortTable(column) {
     if (sortColumn === column) {
