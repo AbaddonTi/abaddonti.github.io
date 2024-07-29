@@ -149,6 +149,7 @@ function filterData() {
     
         if (profitChart) {
             profitChart.destroy(); 
+            profitChart = null;
         }
     }
     
@@ -224,8 +225,8 @@ function updateDataDisplay() {
     }
 }
 
-
 function createProfitChart(data) {
+    luxon.Settings.defaultZone = "Europe/Moscow"; 
     const ctx = document.getElementById('profitChart').getContext('2d');
     if (profitChart) {
         profitChart.destroy();
@@ -266,7 +267,6 @@ function createProfitChart(data) {
         }
     });
 }
-
 
 function sortTable(column) {
     if (sortColumn === column) {
