@@ -328,23 +328,3 @@ function updateChart(data) {
     profitChart.resetZoom();
     profitChart.update();
 }
-
-function toggleChart() {
-    const chartContainer = document.querySelector('.chart-container');
-    const chartToggle = document.querySelector('.chart-toggle');
-    
-    chartContainer.classList.toggle('expanded');
-    chartToggle.classList.toggle('collapsed');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeChart();
-
-    const chartContainer = document.querySelector('.chart-container');
-    const chartToggle = document.querySelector('.chart-toggle');
-    if (chartContainer.classList.contains('expanded')) {
-        chartToggle.classList.remove('collapsed');
-    } else {
-        chartToggle.classList.add('collapsed');
-    }
-});
