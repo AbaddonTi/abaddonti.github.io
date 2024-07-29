@@ -262,7 +262,7 @@ function initializeChart() {
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderWidth: 1,
                 fill: true,
-                tension: 0.4 
+                tension: 0.5
             }]
         },
         options: {
@@ -292,7 +292,9 @@ function initializeChart() {
                 zoom: {
                     pan: {
                         enabled: true,
-                        mode: 'x',
+                        mode: 'xy',
+                        threshold: 10,
+                        onPan: function({chart}) { chart.update('none'); }
                     },
                     zoom: {
                         wheel: {
@@ -301,7 +303,8 @@ function initializeChart() {
                         pinch: {
                             enabled: true
                         },
-                        mode: 'x',
+                        mode: 'xy',
+                        onZoom: function({chart}) { chart.update('none'); }
                     }
                 }
             },
@@ -316,5 +319,6 @@ function updateChart(data) {
     const profits = data.map(record => parseFloat(record['Профит']));
     profitChart.data.labels = labels;
     profitChart.data.datasets[0].data = profits;
+    profitChart.resetZoom(); 
     profitChart.update();
 }
