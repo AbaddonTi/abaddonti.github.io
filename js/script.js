@@ -322,3 +322,20 @@ function updateChart(data) {
     profitChart.resetZoom(); 
     profitChart.update();
 }
+
+function updateZoom(axis, value) {
+    const range = 10 - value + 1; 
+    const min = axis === 'x' ? profitChart.scales.x.min : profitChart.scales.y.min;
+    const max = axis === 'x' ? profitChart.scales.x.max : profitChart.scales.y.max;
+
+    if (axis === 'x') {
+        profitChart.options.scales.x.min = min + (max - min) / range;
+        profitChart.options.scales.x.max = max - (max - min) / range;
+    } else if (axis === 'y') {
+        profitChart.options.scales.y.min = min + (max - min) / range;
+        profitChart.options.scales.y.max = max - (max - min) / range;
+    }
+
+    profitChart.update();
+}
+
