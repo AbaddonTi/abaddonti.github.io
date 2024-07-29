@@ -6,6 +6,7 @@ let teamEmployeeMap = {};
 let sortColumn = 'Дата';
 let sortDirection = 'desc'; 
 let profitChart;
+let expenseCategorySums = {};
 
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
@@ -103,7 +104,7 @@ function filterData() {
     
         let netIncome = 0;
         let totalExpenses = 0;
-        const expenseCategorySums = {};
+        expenseCategorySums = {};
     
         filteredRecords.forEach(record => {
             const operationText = record['Операция'];
@@ -132,10 +133,7 @@ function filterData() {
         document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
         document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
     
-        const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
-            return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
-        }).join('');
-        document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
+        updateExpenseButtons();
     
         createProfitChart(filteredRecords); 
     } else {
@@ -155,6 +153,13 @@ function filterData() {
     
     updateDataDisplay();
 
+}
+
+function updateExpenseButtons() {
+    const expenseButtonsHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
+        return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
+    }).join('');
+    document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseButtonsHTML}</div>`;
 }
 
 function formatCurrency(value) {
@@ -226,46 +231,49 @@ function updateDataDisplay() {
 }
 
 function createProfitChart(data) {
-    luxon.Settings.defaultZone = "Europe/Moscow"; 
+    luxon.Settings.defaultZone = "Europe/Moscow";  
     const ctx = document.getElementById('profitChart').getContext('2d');
     if (profitChart) {
-        profitChart.destroy();
-    }
-    profitChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.map(record => formatDate(record['Дата'])),
-            datasets: [{
-                label: 'Общий профит',
-                data: data.map(record => parseFloat(record['Профит'])),
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'day',
-                        tooltipFormat: 'DD/MM/YYYY',
+        profitChart.data.labels = data.map(record => formatDate(record['Дата']));
+        profitChart.data.datasets[0].data = data.map(record => parseFloat(record['Профит']));
+        profitChart.update();
+    } else {
+        profitChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(record => formatDate(record['Дата'])),
+                datasets: [{
+                    label: 'Общий профит',
+                    data: data.map(record => parseFloat(record['Профит'])),
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            tooltipFormat: 'DD/MM/YYYY',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Дата'
+                        }
                     },
-                    title: {
-                        display: true,
-                        text: 'Дата'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Общий профит ($)'
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Общий профит ($)'
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 }
 
 function sortTable(column) {
