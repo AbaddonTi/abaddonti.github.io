@@ -46,18 +46,21 @@
                 <div id="net-income-display">Чистая прибыль: </div>
                 <div id="total-expense-display">Общая сумма трат: </div>
             </div>
+            
             <div class="chart-toggle-container">
                 <div class="chart-toggle" onclick="toggleChart()">
-                    График <span class="arrow">▼</span>
+                    <img src="icon.svg" class="arrow" alt="Toggle Chart">
                 </div>
             </div>
+            
             <div class="chart-container">
                 <canvas id="profitChart"></canvas>
             </div>
+            
             <div class="expenses">
                 <h2>Расходы (детально):</h2>
                 <div id="expense-buttons">
-                    <!-- Кнопки расходов будут добавлены здесь -->
+                    <!-- Expense buttons will be added here -->
                 </div>
                 <button id="toggle-all" onclick="toggleAllButtons()">Выделить все / Снять выделение</button>
             </div>
