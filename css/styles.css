@@ -166,10 +166,21 @@ tr:hover {
     margin-top: 20px;
 }
 
+.chart-toggle-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
 .chart-toggle {
     display: flex;
     align-items: center;
     cursor: pointer;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    font-size: 14px;
 }
 
 .chart-toggle .arrow {
@@ -180,7 +191,6 @@ tr:hover {
 .chart-toggle.collapsed .arrow {
     transform: rotate(-90deg);
 }
-
 
 .chart-container.expanded {
     display: block;
