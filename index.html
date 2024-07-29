@@ -5,7 +5,7 @@
     <title>Общий анализ проекта</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
+    <script src="https://cdnjs.cloudflare.net/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.0.0"></script>
@@ -13,56 +13,60 @@
     <script defer src="js/script.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Общий анализ проекта</h1>
-        <div class="filters">
-            <div class="filter-group">
-                <label for="start-date">Начальная дата и время:</label>
-                <input type="datetime-local" id="start-date" onchange="filterData()">
-            </div>
-            <div class="filter-group">
-                <label for="end-date">Конечная дата и время:</label>
-                <input type="datetime-local" id="end-date" onchange="filterData()">
-            </div>
-            <div class="filter-group">
-                <label for="team">Выбор команды:</label>
-                <select id="team" onchange="updateEmployeeDropdown(); filterData();">
-                    <option value="Все">Все</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="employee">Выбор сотрудника:</label>
-                <select id="employee" onchange="filterData()">
-                    <option value="Любой">Любой</option>
-                </select>
-            </div>
+<div class="container">
+    <h1>Общий анализ проекта</h1>
+    <div class="filters">
+        <div class="filter-group">
+            <label for="start-date">Начальная дата и время:</label>
+            <input type="datetime-local" id="start-date" onchange="filterData()">
         </div>
-        <div class="results">
-            <div class="summary">
-                <h2>Общая сводка по бизнесу:</h2>
-                <div id="profit-display">Общий профит: </div>
-                <div id="spread-display">Средний спред: </div>
-                <div id="volume-display">Общий объем: </div>
-                <div id="net-income-display">Чистая прибыль: </div>
-                <div id="total-expense-display">Общая сумма трат: </div>
-            </div>
-            <div class="chart-toggle-container">
-                <div class="chart-toggle" onclick="toggleChart()">
-                    График <span class="arrow">▼</span>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="profitChart"></canvas>
-            </div>
-            <div class="expenses">
-                <h2>Расходы (детально):</h2>
-                <div id="expense-buttons">
-                    <!-- Кнопки расходов будут добавлены здесь -->
-                </div>
-                <button id="toggle-all" onclick="toggleAllButtons()">Выделить все / Снять выделение</button>
-            </div>
+        <div class="filter-group">
+            <label for="end-date">Конечная дата и время:</label>
+            <input type="datetime-local" id="end-date" onchange="filterData()">
         </div>
-        <div id="data-display">Ожидание данных...</div>
+        <div class="filter-group">
+            <label for="team">Выбор команды:</label>
+            <select id="team" onchange="updateEmployeeDropdown(); filterData();">
+                <option value="Все">Все</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="employee">Выбор сотрудника:</label>
+            <select id="employee" onchange="filterData()">
+                <option value="Любой">Любой</option>
+            </select>
+        </div>
     </div>
+    <div class="results">
+        <div class="summary">
+            <h2>Общая сводка по бизнесу:</h2>
+            <div id="profit-display">Общий профит: </div>
+            <div id="spread-display">Средний спред: </div>
+            <div id="volume-display">Общий объем: </div>
+            <div id="net-income-display">Чистая прибыль: </div>
+            <div id="total-expense-display">Общая сумма трат: </div>
+        </div>
+    </div>
+
+    <div class="chart-toggle-container">
+        <div class="chart-toggle" onclick="toggleChart()">
+            <img src="icon.svg" class="arrow" alt="Toggle Chart">
+        </div>
+    </div>
+
+
+    <div class="chart-container">
+        <canvas id="profitChart"></canvas>
+    </div>
+
+    <div class="expenses">
+        <h2>Расходы (детально):</h2>
+        <div id="expense-buttons">
+            <!-- Кнопки расходов будут добавлены здесь -->
+        </div>
+        <button id="toggle-all" onclick="toggleAllButtons()">Выделить все / Снять выделение</button>
+    </div>
+    <div id="data-display">Ожидание данных...</div>
+</div>
 </body>
 </html>
