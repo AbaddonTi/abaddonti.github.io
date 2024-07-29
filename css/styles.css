@@ -160,10 +160,15 @@ tr:hover {
 }
 
 .chart-container {
-    display: none;
     width: 100%;
-    height: 400px;
+    height: 0;
     margin-top: 20px;
+    overflow: hidden;
+    transition: height 0.5s ease;
+}
+
+.chart-container.expanded {
+    height: 400px;
 }
 
 .chart-toggle-container {
@@ -178,22 +183,18 @@ tr:hover {
     justify-content: center;
     cursor: pointer;
     padding: 5px 10px;
-    background-color: #007bff;
-    color: white;
+    background-color: transparent;
     border-radius: 5px;
-    font-size: 14px;
     width: fit-content;
 }
 
 .chart-toggle .arrow {
-    margin-left: 5px;
+    width: 24px;
+    height: 24px;
+    transform: rotate(90deg);
     transition: transform 0.3s;
 }
 
 .chart-toggle.collapsed .arrow {
-    transform: rotate(-90deg);
-}
-
-.chart-container.expanded {
-    display: block;
+    transform: rotate(-90deg); 
 }
