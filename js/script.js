@@ -262,7 +262,8 @@ function initializeChart() {
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderWidth: 1,
-                fill: true
+                fill: true,
+                lineTension: 0.1
             }]
         },
         options: {
@@ -285,6 +286,16 @@ function initializeChart() {
                 }
             },
             plugins: {
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: 'xy'
+                    },
+                    zoom: {
+                        enabled: true,
+                        mode: 'xy'
+                    }
+                },
                 legend: {
                     display: true,
                     position: 'top'
