@@ -78,7 +78,7 @@ function filterData() {
     const selectedEmployee = document.getElementById('employee').value;
 
     if (!startDate.isValid || !endDate.isValid) {
-        document.getElementById('data-display').innerHTML = 'Пожалуйста, введите корректные начальную и конечные даты.';
+        document.getElementById('data-display').innerHTML = 'Пожалуйста, введите корректные начальную и конечную даты.';
         return;
     }
 
@@ -137,10 +137,6 @@ function filterData() {
         }).join('');
         document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
 
-        if (typeof updateExpenseButtons === 'function') {
-            updateExpenseButtons();
-        }
-
         updateChart(filteredRecords);
     } else {
         document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
@@ -150,13 +146,11 @@ function filterData() {
         document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
         document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
         document.getElementById('expense-buttons').innerHTML = '';
-
         updateChart([]);
     }
 
     updateDataDisplay();
 }
-
 
 function formatCurrency(value) {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -268,8 +262,7 @@ function initializeChart() {
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderWidth: 1,
                 fill: true,
-                lineTension: 0.1,
-                showLine: true
+                tension: 0.4 
             }]
         },
         options: {
@@ -292,19 +285,24 @@ function initializeChart() {
                 }
             },
             plugins: {
-                zoom: {
-                    pan: {
-                        enabled: true,
-                        mode: 'xy'
-                    },
-                    zoom: {
-                        enabled: true,
-                        mode: 'xy'
-                    }
-                },
                 legend: {
                     display: true,
                     position: 'top'
+                },
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: 'x',
+                    },
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'x',
+                    }
                 }
             },
             responsive: true,
@@ -312,7 +310,6 @@ function initializeChart() {
         }
     });
 }
-
 
 function updateChart(data) {
     const labels = data.map(record => luxon.DateTime.fromISO(record['Дата'], { zone: 'Europe/Moscow' }).toISO());
