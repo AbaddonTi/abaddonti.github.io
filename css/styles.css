@@ -155,6 +155,12 @@ th .sort-arrow.asc {
     transform: translateY(-50%) rotate(180deg);
 }
 
+#profitChart {
+    max-width: 100%;
+    margin: 20px 0;
+}
+
+
 tr:hover {
     background-color: #e6f7e6;
 }
