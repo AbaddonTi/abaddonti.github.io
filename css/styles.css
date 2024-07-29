@@ -164,3 +164,13 @@ tr:hover {
     height: 400px;
     margin-top: 20px;
 }
+
+.chart-controls {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 20px;
+}
+.chart-controls label {
+    margin-right: 10px;
+}
