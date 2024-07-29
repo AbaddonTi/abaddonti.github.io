@@ -5,10 +5,8 @@
     <title>Общий анализ проекта</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/luxon"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/2.3.1/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="js/script.js"></script>
 </head>
 <body>
@@ -45,7 +43,9 @@
                 <div id="net-income-display">Чистая прибыль: </div>
                 <div id="total-expense-display">Общая сумма трат: </div>
             </div>
-            <canvas id="profitChart" width="400" height="200"></canvas>
+            <div class="chart-container">
+                <canvas id="profitChart"></canvas>
+            </div>
             <div class="expenses">
                 <h2>Расходы (детально):</h2>
                 <div id="expense-buttons">
