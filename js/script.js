@@ -1,12 +1,3 @@
-let allRecords = [];
-let filteredRecords = [];
-let uniqueTeams = new Set();
-let uniqueEmployees = new Set();
-let teamEmployeeMap = {};
-let sortColumn = 'Дата';
-let sortDirection = 'desc'; 
-let profitChart;
-
 const incomeOperations = ['Пересчёт кассы', 'Доход от рефералов'];
 const expenseOperations = [
     'Апелляция', 'Аренда недвижимости / ЖКХ', 'Бытовые',
@@ -15,26 +6,44 @@ const expenseOperations = [
     'Сим карты', 'Софт, подписки', 'Техника'
 ];
 
-grist.ready({
-    columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем', 'Операция', 'Сумма'],  
-    requiredAccess: 'read table'
-});
+let allRecords = [];
+let filteredRecords = [];
+let uniqueTeams = new Set();
+let teamEmployeeMap = {};
+let sortColumn = 'Дата';
+let sortDirection = 'desc'; 
+let profitChart;
 
-grist.onRecords(function(records, mappings) {
+document.addEventListener('DOMContentLoaded', initialize);
+
+function initialize() {
+    grist.ready({
+        columns: ['Дата', 'Профит', 'Команда', 'Сотрудник', 'Спред', 'Объем', 'Операция', 'Сумма'],  
+        requiredAccess: 'read table'
+    });
+
+    grist.onRecords(handleRecords);
+
+    initializeChart();
+    addEventListeners();
+}
+
+function handleRecords(records, mappings) {
     const mappedRecords = grist.mapColumnNames(records);
     if (mappedRecords) {
         allRecords = mappedRecords;  
         uniqueTeams = new Set(mappedRecords.map(record => record['Команда']));
         teamEmployeeMap = buildTeamEmployeeMap(mappedRecords);
+
         updateDropdown('team', uniqueTeams, 'Все');
         updateEmployeeDropdown();
         updateExpenseButtons();
-        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+        clearDataDisplay();
         filterData(); 
     } else {
         console.error("Please map all columns correctly");
     }
-});
+}
 
 function buildTeamEmployeeMap(records) {
     const map = {};
@@ -90,66 +99,7 @@ function filterData() {
         return isInDateRange && isInTeam && isInEmployee;
     });
 
-    if (filteredRecords.length > 0) {
-        const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
-        const formattedProfitSum = formatCurrency(profitSum);
-
-        const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
-        const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
-        const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
-
-        const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'] || 0), 0).toFixed(2);
-        const formattedVolumeSum = formatCurrency(volumeSum);
-
-        let netIncome = 0;
-        let totalExpenses = 0;
-        const expenseCategorySums = {};
-
-        filteredRecords.forEach(record => {
-            const operationText = record['Операция'];
-            const amount = parseFloat(record['Сумма'] || 0);
-
-            if (incomeOperations.includes(operationText)) {
-                netIncome += amount;
-            } else if (expenseOperations.includes(operationText)) {
-                netIncome -= amount;
-                totalExpenses += amount;
-
-                if (!expenseCategorySums[operationText]) {
-                    expenseCategorySums[operationText] = 0;
-                }
-                expenseCategorySums[operationText] += amount;
-            }
-        });
-
-        const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
-        const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
-
-        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-        document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
-        document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
-        document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
-        document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
-        document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
-
-        const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
-            return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
-        }).join('');
-        document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
-
-        updateChart(filteredRecords);
-    } else {
-        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
-        document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
-        document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
-        document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
-        document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
-        document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
-        document.getElementById('expense-buttons').innerHTML = '';
-        updateChart([]);
-    }
-
-    updateDataDisplay();
+    updateDisplay();
 }
 
 function formatCurrency(value) {
@@ -163,7 +113,7 @@ function formatDate(dateString) {
 
 function toggleExpense(button) {
     button.classList.toggle('active');
-    updateDataDisplay();
+    updateDisplay();
 }
 
 function toggleAllButtons() {
@@ -176,48 +126,55 @@ function toggleAllButtons() {
             button.classList.add('active');
         }
     });
-    updateDataDisplay();
+    updateDisplay();
 }
 
-function updateDataDisplay() {
+function updateDisplay() {
     const activeButtons = document.querySelectorAll('.expense-button.active');
     const activeCategories = [...activeButtons].map(button => button.getAttribute('data-category'));
     const activeFilteredRecords = filteredRecords.filter(record => activeCategories.includes(record['Операция']));
 
     if (activeFilteredRecords.length > 0) {
         const sortedRecords = sortRecords(activeFilteredRecords);
-        const tableHTML = `
-            <table>
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('Дата')">Дата <span class="sort-arrow ${sortColumn === 'Дата' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                        <th onclick="sortTable('Сотрудник')">Сотрудник <span class="sort-arrow ${sortColumn === 'Сотрудник' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                        <th onclick="sortTable('Операция')">Операция <span class="sort-arrow ${sortColumn === 'Операция' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                        <th onclick="sortTable('Сумма')">Сумма <span class="sort-arrow ${sortColumn === 'Сумма' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                        <th onclick="sortTable('Объем')">Объем <span class="sort-arrow ${sortColumn === 'Объем' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                        <th onclick="sortTable('Профит')">Профит <span class="sort-arrow ${sortColumn === 'Профит' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                        <th onclick="sortTable('Спред')">Спред <span class="sort-arrow ${sortColumn === 'Спред' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sortedRecords.map(record => `
-                        <tr>
-                            <td>${formatDate(record['Дата'])}</td>
-                            <td>${record['Сотрудник']}</td>
-                            <td>${record['Операция']}</td>
-                            <td>${record['Сумма']}</td>
-                            <td>${record['Объем']}</td>
-                            <td>${record['Профит']}</td>
-                            <td>${record['Спред']}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+        const tableHTML = generateTableHTML(sortedRecords);
         document.getElementById('data-display').innerHTML = tableHTML;
     } else {
-        document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+        clearDataDisplay();
     }
+
+    updateSummary(activeFilteredRecords);
+    updateChart(activeFilteredRecords);
+}
+
+function generateTableHTML(records) {
+    return `
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="sortTable('Дата')">Дата <span class="sort-arrow ${sortColumn === 'Дата' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                    <th onclick="sortTable('Сотрудник')">Сотрудник <span class="sort-arrow ${sortColumn === 'Сотрудник' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                    <th onclick="sortTable('Операция')">Операция <span class="sort-arrow ${sortColumn === 'Операция' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                    <th onclick="sortTable('Сумма')">Сумма <span class="sort-arrow ${sortColumn === 'Сумма' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                    <th onclick="sortTable('Объем')">Объем <span class="sort-arrow ${sortColumn === 'Объем' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                    <th onclick="sortTable('Профит')">Профит <span class="sort-arrow ${sortColumn === 'Профит' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                    <th onclick="sortTable('Спред')">Спред <span class="sort-arrow ${sortColumn === 'Спред' ? (sortDirection === 'asc' ? 'asc' : '') : ''}">▲</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                ${records.map(record => `
+                    <tr>
+                        <td>${formatDate(record['Дата'])}</td>
+                        <td>${record['Сотрудник']}</td>
+                        <td>${record['Операция']}</td>
+                        <td>${record['Сумма']}</td>
+                        <td>${record['Объем']}</td>
+                        <td>${record['Профит']}</td>
+                        <td>${record['Спред']}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
 }
 
 function sortTable(column) {
@@ -227,7 +184,7 @@ function sortTable(column) {
         sortColumn = column;
         sortDirection = 'asc';
     }
-    updateDataDisplay();
+    updateDisplay();
 }
 
 function sortRecords(records) {
@@ -244,10 +201,6 @@ function sortRecords(records) {
         }
     });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeChart();
-});
 
 function initializeChart() {
     const ctx = document.getElementById('profitChart').getContext('2d');
@@ -327,4 +280,75 @@ function updateChart(data) {
     profitChart.data.datasets[0].data = profits;
     profitChart.resetZoom();
     profitChart.update();
+}
+
+function updateSummary(filteredRecords) {
+    if (filteredRecords.length > 0) {
+        const profitSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Профит'] || 0), 0).toFixed(2);
+        const formattedProfitSum = formatCurrency(profitSum);
+
+        const validSpreadRecords = filteredRecords.filter(record => record['Спред'] !== null);
+        const spreadSum = validSpreadRecords.reduce((sum, record) => sum + parseFloat(record['Спред'] || 0), 0);
+        const spreadAvg = (spreadSum / validSpreadRecords.length * 100).toFixed(2);
+
+        const volumeSum = filteredRecords.reduce((sum, record) => sum + parseFloat(record['Объем'] || 0), 0).toFixed(2);
+        const formattedVolumeSum = formatCurrency(volumeSum);
+
+        let netIncome = 0;
+        let totalExpenses = 0;
+        const expenseCategorySums = {};
+
+        filteredRecords.forEach(record => {
+            const operationText = record['Операция'];
+            const amount = parseFloat(record['Сумма'] || 0);
+
+            if (incomeOperations.includes(operationText)) {
+                netIncome += amount;
+            } else if (expenseOperations.includes(operationText)) {
+                netIncome -= amount;
+                totalExpenses += amount;
+
+                if (!expenseCategorySums[operationText]) {
+                    expenseCategorySums[operationText] = 0;
+                }
+                expenseCategorySums[operationText] += amount;
+            }
+        });
+
+        const formattedNetIncome = formatCurrency(netIncome.toFixed(2));
+        const formattedTotalExpenses = formatCurrency(totalExpenses.toFixed(2));
+
+        document.getElementById('profit-display').innerHTML = `Общий профит: ${formattedProfitSum} $`;
+        document.getElementById('spread-display').innerHTML = `Средний спред: ${spreadAvg.replace('.', ',')} %`;
+        document.getElementById('volume-display').innerHTML = `Общий объем: ${formattedVolumeSum} $`;
+        document.getElementById('net-income-display').innerHTML = `Чистая прибыль: ${formattedNetIncome} $`;
+        document.getElementById('total-expense-display').innerHTML = `Общая сумма трат: ${formattedTotalExpenses} $`;
+
+        const expenseCategoriesHTML = Object.entries(expenseCategorySums).map(([category, sum]) => {
+            return `<button class="expense-button" data-category="${category}" onclick="toggleExpense(this)">${category}: ${formatCurrency(sum.toFixed(2))} $</button>`;
+        }).join('');
+        document.getElementById('expense-buttons').innerHTML = `<div class="expense-buttons-container">${expenseCategoriesHTML}</div>`;
+    } else {
+        document.getElementById('profit-display').innerHTML = 'Общий профит: 0.00 $';
+        document.getElementById('spread-display').innerHTML = 'Средний спред: 0.00 %';
+        document.getElementById('volume-display').innerHTML = 'Общий объем: 0.00 $';
+        document.getElementById('net-income-display').innerHTML = 'Чистая прибыль: 0.00 $';
+        document.getElementById('total-expense-display').innerHTML = 'Общая сумма трат: 0.00 $';
+        document.getElementById('expense-buttons').innerHTML = '';
+    }
+}
+
+function clearDataDisplay() {
+    document.getElementById('data-display').innerHTML = 'Нет данных для отображения.';
+}
+
+function addEventListeners() {
+    document.getElementById('start-date').addEventListener('change', filterData);
+    document.getElementById('end-date').addEventListener('change', filterData);
+    document.getElementById('team').addEventListener('change', () => {
+        updateEmployeeDropdown();
+        filterData();
+    });
+    document.getElementById('employee').addEventListener('change', filterData);
+    document.getElementById('toggle-all').addEventListener('click', toggleAllButtons);
 }
