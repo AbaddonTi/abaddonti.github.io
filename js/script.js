@@ -318,7 +318,7 @@ function initializeChart() {
                             onZoom: function({chart}) { chart.update('none'); }
                         },
                         wheel: {
-                            enabled: false  
+                            enabled: true  
                         },
                         pinch: {
                             enabled: true  
