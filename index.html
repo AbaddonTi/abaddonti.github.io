@@ -49,6 +49,12 @@
             <div class="chart-container">
                 <canvas id="profitChart"></canvas>
             </div>
+            <div class="chart-controls">
+                <label for="zoomX">Масштаб по оси X:</label>
+                <input type="range" id="zoomX" min="1" max="10" step="1" value="1" oninput="updateZoom('x', this.value)">
+                <label for="zoomY">Масштаб по оси Y:</label>
+                <input type="range" id="zoomY" min="1" max="10" step="1" value="1" oninput="updateZoom('y', this.value)">
+            </div>
             <div class="expenses">
                 <h2>Расходы (детально):</h2>
                 <div id="expense-buttons">
